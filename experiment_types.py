@@ -1,9 +1,9 @@
-import pandas as pd
 from dataclasses import dataclass
 from enum import Enum
 import pandas as pd
 import os
 import numpy as np
+import math
 
 
 class Eyesight(Enum):
@@ -14,10 +14,13 @@ class Eyesight(Enum):
     BAD = 2
 
 
-@dataclass
+@dataclass(frozen=True)
 class ScreenLocation:
     x: float
     y: float
+
+    def distance(self, other: "ScreenLocation") -> float:
+        return math.sqrt(math.pow(self.x - other.x, 2) + math.pow(self.y - other.y, 2))
 
 
 @dataclass
@@ -60,35 +63,46 @@ class Experiment:
         self.__id: int = Experiment.__available_id
         self.__eyesight: Eyesight = experiment_input.eyesight
         self.__raw_data: RawData = Experiment.__parse_raw_data_dir(experiment_input.raw_data_dir_path)
-        self.__reference_data: ReferenceData = Experiment.__parse_reference_image_data(
+        self.__video_start_timestamp = self.raw_data.events.loc[
+            self.raw_data.events["name"] == "start.video", "timestamp [ns]"
+        ].values[0]
+        self.__video_end_timestamp = self.raw_data.events.loc[
+            self.raw_data.events["name"] == "end.video", "timestamp [ns]"
+        ].values[0]
+        self.__reference_data: ReferenceData = self.__parse_reference_image_data(
             experiment_input.reference_data_dir_path
         )
         self.__mapped_gaze_on_video: MappedGazeOnVideo = Experiment.__parse_mapped_gaze_on_video(
             experiment_input.mapped_gaze_on_video_dir_path
         )
 
-    def get_num_of_fixation_and_mean_duration(self) -> tuple[int, int]:
-        """
-        :return: The number of fixations between the first and second events and the mean duration of these fixations
-                 (in milliseconds).
-        """
-        # Load the events.csv and fixation.csv files into dataframes
-        events_df = self.raw_data.events
-        fixation_df = self.raw_data.fixations
+    @property
+    def id(self):
+        return self.__id
 
-        # Find the timestamps for the "eventA_start" and "eventA_end" events
-        start_timestamp = events_df.loc[events_df["name"] == "start.video", "timestamp [ns]"].values[0]
-        stop_timestamp = events_df.loc[events_df["name"] == "end.video", "timestamp [ns]"].values[0]
+    @property
+    def eyesight(self):
+        return self.__eyesight
 
-        # Filter fixation data within the specified time range
-        fixations_during_event = fixation_df[(fixation_df["start timestamp [ns]"] >= start_timestamp) &
-                                             (fixation_df["start timestamp [ns]"] <= stop_timestamp)]
+    @property
+    def raw_data(self):
+        return self.__raw_data
 
-        # Calculate the number of fixations and average fixation duration
-        num_fixations = len(fixations_during_event)
-        average_fixation_duration = fixations_during_event["duration [ms]"].mean()
+    @property
+    def reference_data(self):
+        return self.__reference_data
 
-        return num_fixations, average_fixation_duration
+    @property
+    def mapped_gaze_on_video(self):
+        return self.__mapped_gaze_on_video
+
+    @property
+    def video_start_timestamp(self):
+        return self.__video_start_timestamp
+
+    @property
+    def video_end_timestamp(self):
+        return self.__video_end_timestamp
 
     @staticmethod
     def __parse_raw_data_dir(raw_data_dir_path: str) -> RawData:
@@ -100,6 +114,8 @@ class Experiment:
                                      "start timestamp [ns]", "end timestamp [ns]", "duration [ms]"]
         blinks_path: str = rf"{raw_data_dir_path}\blinks.csv"
         blinks_df: pd.DataFrame = pd.read_csv(blinks_path, names=blinks_headers, skiprows=1)
+        blink_int_columns: list[str] = ["start timestamp [ns]", "end timestamp [ns]", "duration [ms]"]
+        blinks_df[blink_int_columns] = blinks_df[blink_int_columns].astype(np.int64)
 
         events_headers: list[str] = ["recording id", "timestamp [ns]", "name", "type"]
         events_path: str = rf"{raw_data_dir_path}\events.csv"
@@ -110,6 +126,10 @@ class Experiment:
                                         "azimuth [deg]", "elevation [deg]"]
         fixations_path: str = rf"{raw_data_dir_path}\fixations.csv"
         fixations_df: pd.DataFrame = pd.read_csv(fixations_path, names=fixations_headers, skiprows=1)
+        fixations_int_columns: list[str] = ["start timestamp [ns]", "end timestamp [ns]", "duration [ms]"]
+        fixations_float_columns: list[str] = ["fixation x [px]", "fixation y [px]"]
+        fixations_df[fixations_int_columns] = fixations_df[fixations_int_columns].astype(np.int64)
+        fixations_df[fixations_float_columns] = fixations_df[fixations_float_columns].astype(float)
 
         gaze_headers: list[str] = ["section id", "recording id", "timestamp [ns]", "gaze x [px]", "gaze y [px]",
                                    "worn", "fixation id", "blink id", "azimuth [deg]", "elevation [deg]"]
@@ -134,13 +154,21 @@ class Experiment:
 
         return RawData(blinks_df, events_df, fixations_df, gaze_df, imu_df, world_timestamps_df)
 
-    @staticmethod
-    def __parse_reference_image_data(reference_data_dir_path: str) -> ReferenceData:
+    def __parse_reference_image_data(self, reference_data_dir_path: str) -> ReferenceData:
         fixations_headers: list[str] = ["section id", "recording id", "fixation id", "start timestamp [ns]",
                                         "end timestamp [ns]", "duration [ms]", "fixation detected in reference image",
                                         "fixation x [px]", "fixation y [px]"]
         fixations_path: str = rf"{reference_data_dir_path}\fixations.csv"
         fixations_df: pd.DataFrame = pd.read_csv(fixations_path, names=fixations_headers, skiprows=1)
+        # # Filter fixation data within the specified time range
+        fixations_df = fixations_df[
+            (fixations_df["start timestamp [ns]"] >= self.__video_start_timestamp) &
+            (fixations_df["start timestamp [ns]"] <= self.__video_end_timestamp) &
+            (fixations_df["end timestamp [ns]"] >= self.__video_start_timestamp) &
+            (fixations_df["end timestamp [ns]"] <= self.__video_end_timestamp)
+             ]
+        fixations_df["start timestamp [ns]"] = fixations_df["start timestamp [ns]"] - self.__video_start_timestamp
+        fixations_df["end timestamp [ns]"] = fixations_df["end timestamp [ns]"] - self.__video_start_timestamp
 
         gaze_headers: list[str] = ["section id", "recording id", "timestamp [ns]", " gaze detected in reference image",
                                    "gaze position in reference image x [px]", "gaze position in reference image y [px]",
@@ -167,33 +195,15 @@ class Experiment:
         gaze_path: str = os.path.join(mapped_gaze_on_video_path, "gaze.csv")
         gaze_df: pd.DataFrame = pd.read_csv(gaze_path, names=gaze_headers, skiprows=1)
 
-        float_columns = ["gaze position in reference image x [px]", "gaze position in reference image y [px]",
-                         "gaze position transf x [px]", "gaze position transf y [px]"]
+        float_columns: list[str] = [
+            "gaze position in reference image x [px]", "gaze position in reference image y [px]",
+            "gaze position transf x [px]", "gaze position transf y [px]"
+        ]
         gaze_df[float_columns] = gaze_df[float_columns].astype(float)
 
-        int_columns = ["timestamp [ns]", "section start time [ns]", "section end time [ns]"]
+        int_columns: list[str] = ["timestamp [ns]", "section start time [ns]", "section end time [ns]"]
         gaze_df[int_columns] = gaze_df[int_columns].astype(np.int64)
-
         gaze_df["time passed from start [ns]"] = gaze_df["timestamp [ns]"] - gaze_df["section start time [ns]"]
 
         return MappedGazeOnVideo(gaze_df)
 
-    @property
-    def id(self):
-        return self.__id
-
-    @property
-    def eyesight(self):
-        return self.__eyesight
-
-    @property
-    def raw_data(self):
-        return self.__raw_data
-
-    @property
-    def reference_data(self):
-        return self.__reference_data
-
-    @property
-    def mapped_gaze_on_video(self):
-        return self.__mapped_gaze_on_video
