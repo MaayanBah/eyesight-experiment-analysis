@@ -14,7 +14,11 @@ class GraphType(Enum):
     Line = 2
 
 
-def return_bar_graph(categories, values, x_label, y_label, graph_title, bar_width=0.4) -> tuple[plt.figure, any]:
+def return_bar_graph(categories: list[str],
+                     values: list[float | int],
+                     x_label: str,
+                     y_label: str,
+                     graph_title: str, bar_width=0.4) -> tuple[plt.figure, any]:
     fig, ax = plt.subplots()
     ax.bar(categories, values, width=bar_width, align='center', color=BLUE)
     ax.set_xlabel(x_label)
@@ -91,15 +95,19 @@ def create_graphs_of_good_vs_bad_eyesight_fixation_data(
      bad_duration_mean) = bad_analyzed_experiments.get_mean_number_of_fixations_and_duration()
 
     fixations_fig, _ = return_bar_graph(
-        ["good", "bad"],
+        ["Good Eyesight", "Bad Eyesight"],
         [good_num_of_fixation_mean, bad_num_of_fixation_mean],
-        "Eyesight", "Mean of fixation number", "number of fixations"
+        "Eyesight",
+        "Number of Fixations (Average)",
+        "Average Number of Fixations"
     )
 
     duration_fig, _ = return_bar_graph(
-        ["good", "bad"],
+        ["Good Eyesight", "Bad Eyesight"],
         [good_duration_mean, bad_duration_mean],
-        "Eyesight", "Mean of fixation's duration", "duration mean in milliseconds"
+        "Eyesight",
+        "Average Duration",
+        "Average Fixation Duration [ms]"
     )
 
     return fixations_fig, duration_fig
@@ -130,8 +138,9 @@ def get_gaze_variance_graphs(good_analyzed_experiments: AnalyzedExperiments,
         {**good_analyzed_experiments.experiment_gaze_variances_sorted_by_time,
          **bad_analyzed_experiments.experiment_gaze_variances_sorted_by_time},
         {**good_experiments_id_to_color, **bad_experiments_id_to_color},
-        "Time passed", "Variance (location on screen)",
-        "Variance of X axis and Y axis indexes on screen",
+        "Time",
+        "Gaze Variance",
+        "Variance (Screen Coordinates)",
         GraphType.Scattered
     )
 
@@ -148,8 +157,9 @@ def get_gaze_variance_graphs(good_analyzed_experiments: AnalyzedExperiments,
     fig_variance_mean, _ = return_scattered_or_line_graph(
         {"Good Eyesight": good_variances_means, "Bad Eyesight": bad_variances_means},
         {"Good Eyesight": GREEN, "Bad Eyesight": RED},
-        "Time passed", "Mean Variance of location on screen",
-        "Mean Variance of X axis and Y axis indexes on screen",
+        "Time passed",
+        "Gaze Variance (Average)",
+        "Average Gaze Variance (Screen Coordinates)",
         GraphType.Scattered
     )
 
@@ -158,7 +168,6 @@ def get_gaze_variance_graphs(good_analyzed_experiments: AnalyzedExperiments,
 
 def get_fixations_variance_graphs(good_analyzed_experiments: AnalyzedExperiments,
                                   bad_analyzed_experiments: AnalyzedExperiments):
-    print("get_fixations_variance_graphs")
     good_eyesight_fixation_count_sorted_by_time = good_analyzed_experiments.fixation_count_sorted_by_time
     bad_eyesight_fixation_count_sorted_by_time = bad_analyzed_experiments.fixation_count_sorted_by_time
 
@@ -166,8 +175,9 @@ def get_fixations_variance_graphs(good_analyzed_experiments: AnalyzedExperiments
         {"Good Eyesight": good_eyesight_fixation_count_sorted_by_time,
          "Bad Eyesight": bad_eyesight_fixation_count_sorted_by_time},
         {"Good Eyesight": GREEN, "Bad Eyesight": RED},
-        "Time passed", "Number of fixations",
-        "Number of fixations",
+        "Time",
+        "Fixations",
+        "Number of Fixations",
         GraphType.Line
     )
 
@@ -183,14 +193,15 @@ def get_blink_graphs(good_analyzed_experiments: AnalyzedExperiments,
     (bad_num_of_blink_mean,
      bad_blink_num_mean) = bad_analyzed_experiments.get_mean_number_of_blinks_and_duration()
 
-    mean_num_of_blinks_fig, _ = return_bar_graph(["good", "bad"],
+    mean_num_of_blinks_fig, _ = return_bar_graph(["Good Eyesight", "Bad Eyesight"],
                                                  [good_num_of_blink_mean, bad_num_of_blink_mean],
-                                                 "Eyesight", "Mean of number of blinks",
-                                                 "Mean number of blinks")
+                                                 "Eyesight",
+                                                 "Blinks (Average)",
+                                                 "Average Number of Blinks")
 
-    mean_duration_fig, _ = return_bar_graph(["good", "bad"],
+    mean_duration_fig, _ = return_bar_graph(["Good Eyesight", "Bad Eyesight"],
                                             [good_blink_num_mean, bad_blink_num_mean],
                                             "Eyesight",
-                                            "Mean of blink's duration",
-                                            "Blinks duration mean in milliseconds")
+                                            "Blink Duration (Average)",
+                                            "Average Blink Duration [ms]")
     return mean_num_of_blinks_fig, mean_duration_fig

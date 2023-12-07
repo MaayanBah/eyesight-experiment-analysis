@@ -99,14 +99,6 @@ class AnalyzedExperiment:
 
         self.__parameters: AnalyzedExperimentsParameters = parameters
 
-        # self.__video_start_timestamp = self.experiment.raw_data.events.loc[
-        #     self.experiment.raw_data.events["name"] == "start.video", "timestamp [ns]"
-        # ].values[0]
-
-        # self.__video_end_timestamp = self.experiment.raw_data.events.loc[
-        #     self.experiment.raw_data.events["name"] == "end.video", "timestamp [ns]"
-        # ].values[0]
-
     @property
     def experiment(self):
         return self.__experiment
@@ -114,14 +106,6 @@ class AnalyzedExperiment:
     @property
     def parameters(self):
         return self.__parameters
-
-    # @property
-    # def video_start_timestamp(self):
-    #     return self.__video_start_timestamp
-
-    # @property
-    # def video_end_timestamp(self):
-    #     return self.__video_end_timestamp
 
     @lru_cache(maxsize=1)
     def get_num_of_fixation_and_mean_duration_in_video(self) -> tuple[int, int]:
@@ -131,14 +115,6 @@ class AnalyzedExperiment:
         """
         # The fication df is already filtered within the specified time range of the video.
         fixation_df = self.experiment.reference_data.fixations
-
-        # # Filter fixation data within the specified time range
-        # fixations_during_event = fixation_df[
-        #     (fixation_df["start timestamp [ns]"] >= self.video_start_timestamp) &
-        #     (fixation_df["start timestamp [ns]"] <= self.video_end_timestamp) &
-        #     (fixation_df["end timestamp [ns]"] >= self.video_start_timestamp) &
-        #     (fixation_df["end timestamp [ns]"] <= self.video_end_timestamp)
-        #      ]
 
         # Calculate the number of fixations and average fixation duration
         num_fixations = len(fixation_df)
