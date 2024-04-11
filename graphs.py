@@ -168,16 +168,26 @@ def get_gaze_variance_graphs(good_analyzed_experiments: AnalyzedExperiments,
 
 def get_fixations_variance_graphs(good_analyzed_experiments: AnalyzedExperiments,
                                   bad_analyzed_experiments: AnalyzedExperiments):
-    good_eyesight_fixation_count_sorted_by_time = good_analyzed_experiments.fixation_count_sorted_by_time
-    bad_eyesight_fixation_count_sorted_by_time = bad_analyzed_experiments.fixation_count_sorted_by_time
+    good_eyesight_fixation_count_sorted_by_time: list[int] = good_analyzed_experiments.fixation_count_sorted_by_time
+    bad_eyesight_fixation_count_sorted_by_time: list[int] = bad_analyzed_experiments.fixation_count_sorted_by_time
+
+    good_eyesight_num_of_experiment: int = len(good_analyzed_experiments.analyzed_experiments)
+    bad_eyesight_num_of_experiment: int = len(bad_analyzed_experiments.analyzed_experiments)
+
+    good_eyesight_fixation_average_sorted_by_time = [fixation_count / good_eyesight_num_of_experiment
+                                                     for fixation_count
+                                                     in good_eyesight_fixation_count_sorted_by_time]
+    bad_eyesight_fixation_average_sorted_by_time = [fixation_count / bad_eyesight_num_of_experiment
+                                                    for fixation_count
+                                                    in bad_eyesight_fixation_count_sorted_by_time]
 
     fig_fixation_count, _ = return_scattered_or_line_graph(
-        {"Good Eyesight": good_eyesight_fixation_count_sorted_by_time,
-         "Bad Eyesight": bad_eyesight_fixation_count_sorted_by_time},
+        {"Good Eyesight": good_eyesight_fixation_average_sorted_by_time,
+         "Bad Eyesight": bad_eyesight_fixation_average_sorted_by_time},
         {"Good Eyesight": GREEN, "Bad Eyesight": RED},
         "Time",
-        "Fixations",
-        "Number of Fixations",
+        "Fixations (Average)",
+        "Average Number of Fixations",
         GraphType.Line
     )
 
