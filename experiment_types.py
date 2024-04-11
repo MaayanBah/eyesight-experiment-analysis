@@ -4,6 +4,7 @@ import pandas as pd
 import os
 import numpy as np
 import math
+import json
 
 
 class Eyesight(Enum):
@@ -53,6 +54,10 @@ class ExperimentInput:
     mapped_gaze_on_video_dir_path: str
 
 
+@dataclass
+class Info:
+    recording_id: str
+
 class Experiment:
     __available_id: int = 0
 
@@ -60,9 +65,13 @@ class Experiment:
                  experiment_input: ExperimentInput):
         Experiment.__available_id += 1
 
+        # todo fix! theres an actual id.
         self.__id: int = Experiment.__available_id
         self.__eyesight: Eyesight = experiment_input.eyesight
         self.__raw_data: RawData = Experiment.__parse_raw_data_dir(experiment_input.raw_data_dir_path)
+        self.__info: Info = Experiment.__parse_info_file(
+            os.path.join(experiment_input.raw_data_dir_path, "info.json")
+        )
         self.__video_start_timestamp = self.raw_data.events.loc[
             self.raw_data.events["name"] == "start.video", "timestamp [ns]"
         ].values[0]
@@ -103,6 +112,22 @@ class Experiment:
     @property
     def video_end_timestamp(self):
         return self.__video_end_timestamp
+
+    @property
+    def recording_id(self):
+        return self.__info.recording_id
+
+    @staticmethod
+    def __parse_info_file(info_file_path: str):
+        with open(info_file_path) as f:
+            data = json.load(f)
+
+        # Extract the recording_id
+        recording_id = data["recording_id"]
+
+        print("Recording ID:", recording_id)
+
+        return Info(recording_id)
 
     @staticmethod
     def __parse_raw_data_dir(raw_data_dir_path: str) -> RawData:
@@ -160,15 +185,14 @@ class Experiment:
                                         "fixation x [px]", "fixation y [px]"]
         fixations_path: str = rf"{reference_data_dir_path}\fixations.csv"
         fixations_df: pd.DataFrame = pd.read_csv(fixations_path, names=fixations_headers, skiprows=1)
-        # # Filter fixation data within the specified time range
-        fixations_df = fixations_df[
-            (fixations_df["start timestamp [ns]"] >= self.__video_start_timestamp) &
-            (fixations_df["start timestamp [ns]"] <= self.__video_end_timestamp) &
-            (fixations_df["end timestamp [ns]"] >= self.__video_start_timestamp) &
-            (fixations_df["end timestamp [ns]"] <= self.__video_end_timestamp)
-             ]
-        fixations_df["start timestamp [ns]"] = fixations_df["start timestamp [ns]"] - self.__video_start_timestamp
-        fixations_df["end timestamp [ns]"] = fixations_df["end timestamp [ns]"] - self.__video_start_timestamp
+        # Filter fixation data within the specified time range
+        fixations_df = fixations_df[fixations_df["recording id"] == self.recording_id]
+        print(self.__video_start_timestamp)
+        fixations_df = self.__adjust_timestamps(
+            fixations_df,
+            "start timestamp [ns]",
+            "end timestamp [ns]"
+        )
 
         gaze_headers: list[str] = ["section id", "recording id", "timestamp [ns]", " gaze detected in reference image",
                                    "gaze position in reference image x [px]", "gaze position in reference image y [px]",
@@ -186,12 +210,12 @@ class Experiment:
 
     @staticmethod
     def __parse_mapped_gaze_on_video(mapped_gaze_on_video_path: str) -> MappedGazeOnVideo:
-        gaze_headers: list[str] = ["section id", "recording id", "timestamp [ns]", "gaze detected in reference image",
-                                   "gaze position in reference image x [px]", "gaze position in reference image y [px]",
-                                   "fixation id", "recording name", "wearer id", "wearer name",
-                                   "section start time [ns]",
-                                   "section end time [ns]", "start event name", "end event name",
-                                   "gaze position transf x [px]", "gaze position transf y [px]"]
+        gaze_headers: list[str] = [
+            "section id", "recording id", "timestamp [ns]", "gaze detected in reference image",
+            "gaze position in reference image x [px]", "gaze position in reference image y [px]", "fixation id",
+            "recording name", "wearer id", "wearer name", "section start time [ns]", "section end time [ns]",
+            "start event name", "end event name", "gaze position transf x [px]", "gaze position transf y [px]"
+        ]
         gaze_path: str = os.path.join(mapped_gaze_on_video_path, "gaze.csv")
         gaze_df: pd.DataFrame = pd.read_csv(gaze_path, names=gaze_headers, skiprows=1)
 
@@ -207,3 +231,21 @@ class Experiment:
 
         return MappedGazeOnVideo(gaze_df)
 
+    def __adjust_timestamps(self,
+                            df: pd.DataFrame,
+                            event_start_timestamp_column_name: str,
+                            event_end_timestamp_column_name: str) -> pd.DataFrame:
+        # # Filter data within the specified time range
+        df = df[
+            (df[event_start_timestamp_column_name] >= self.__video_start_timestamp) &
+            (df[event_start_timestamp_column_name] <= self.__video_end_timestamp) &
+            (df[event_end_timestamp_column_name] >= self.__video_start_timestamp) &
+            (df[event_end_timestamp_column_name] <= self.__video_end_timestamp)
+            ]
+        print(df.get(["start timestamp [ns]", "end timestamp [ns]"]).head(5))
+        df.loc[:, event_start_timestamp_column_name] -= self.__video_start_timestamp
+        df.loc[:, event_end_timestamp_column_name] -= self.__video_start_timestamp
+        print(df.get(["start timestamp [ns]", "end timestamp [ns]"]).head(5))
+
+
+        return df

@@ -2,8 +2,9 @@ import os
 from client.dialog_methods import display_message, get_directory_path, show_yes_no_dialog
 from experiment_types import Eyesight, ExperimentInput
 
-raw_data_must_have_files: set[str] = {"blinks.csv", "events.csv", "fixations.csv",
-                                      "gaze.csv", "imu.csv", "world_timestamps.csv"}
+raw_data_must_have_files: set[str] = {
+    "blinks.csv", "events.csv", "fixations.csv", "gaze.csv", "imu.csv", "world_timestamps.csv", "info.json"
+}
 reference_data_must_have_files: set[str] = {"fixations.csv", "gaze.csv", "sections.csv"}
 mapped_gaze_must_have_files: set[str] = {"gaze.csv"}
 
