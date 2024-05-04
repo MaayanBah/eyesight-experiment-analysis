@@ -1,8 +1,11 @@
+from __future__ import annotations
 from enum import Enum
 from matplotlib.backends.backend_pdf import PdfPages
-import matplotlib.pyplot as plt
 from AnalyzedExperiments import AnalyzedExperiments
 from itertools import zip_longest
+from sklearn.cluster import KMeans
+import matplotlib.pyplot as plt
+
 
 RED: str = "#FF6161"
 GREEN: str = "#68D47A"
@@ -27,19 +30,19 @@ def return_bar_graph(categories: list[str],
     return fig, ax
 
 
-def return_scattered_or_line_graph(group_name_to_locations: dict[str, list[float]],
-                                   group_name_to_color: dict[str, str],
-                                   x_label: str,
-                                   y_label: str,
-                                   title: str,
-                                   graph_type: GraphType) -> tuple[plt.figure, any]:
+def create_scattered_or_line_graph_sorted_by_time(group_name_to_locations: dict[str, list[float]],
+                                                  group_name_to_color: dict[str, str],
+                                                  x_label: str,
+                                                  y_label: str,
+                                                  title: str,
+                                                  graph_type: GraphType) -> tuple[plt.figure, any]:
     """
     :param group_name_to_locations: group name to it's values sorted by time, if for a certain time there's no data
                                 fill it with None - all groups must have the same list length.
                                 The same group can have several lists.
     :param group_name_to_color: A dictionary from each group name to it's color (RGB or known color names).
-    :param y_label: The Y axis title.
     :param x_label: The X axis title.
+    :param y_label: The Y axis title.
     :param title: The graph title.
     :param graph_type:
     :return: The new figure and the ax_dict (for more info look at matplotlib.subplots documentation)
@@ -67,6 +70,61 @@ def return_scattered_or_line_graph(group_name_to_locations: dict[str, list[float
     return fig, ax
 
 
+def create_scattered_graph(group_name_to_locations: dict[str, list[tuple[float, float]]],
+                           group_name_to_color: dict[str, str],
+                           x_label: str,
+                           y_label: str,
+                           title: str) -> tuple[plt.figure, any]:
+    """
+    :param group_name_to_locations: A dictionary from group name to a list of x, y indexes tuple.
+    :param group_name_to_color: A dictionary from group name to the color of it in the plot.
+    :param x_label: The X axis title.
+    :param y_label: The Y axis title.
+    :param title: The graph title.
+    :return:
+    """
+    fig, ax = plt.subplots()
+    for group_name, locations in group_name_to_locations.items():
+        # Create a scatter plot for each group
+        ax.scatter([location[0] for location in locations],
+                   [location[1] for location in locations],
+                   color=group_name_to_color[group_name],
+                   label=group_name, s=20)
+
+        # Add labels and title
+        ax.set_xlabel(x_label)
+        ax.set_ylabel(y_label)
+        ax.set_title(title)
+
+    # Add a legend
+    ax.legend()
+
+    return fig, ax
+
+
+def create_scattered_k_means_graph(locations_list,
+                                   n_clusters,
+                                   x_label: str,
+                                   y_label: str,
+                                   title: str) -> tuple[plt.figure, any]:
+    fig, ax = plt.subplots()
+    kmeans = KMeans(n_clusters=n_clusters)
+    kmeans.fit(locations_list)
+
+    ax.scatter(
+        [x_y[0] for x_y in locations_list],
+        [x_y[1] for x_y in locations_list],
+        c=kmeans.labels_)
+
+    # Add labels and title
+    ax.set_xlabel(x_label)
+    ax.set_ylabel(y_label)
+    ax.set_title(title)
+
+    ax.legend
+
+    return fig, ax
+
 def matplotlib_figures_to_pdf(pdf_name: str, *figures: plt.figure) -> None:
     """
     :param pdf_name: The name of the PDF file.
@@ -89,10 +147,10 @@ def create_graphs_of_good_vs_bad_eyesight_fixation_data(
              good and bad eyesight.
     """
     (good_num_of_fixation_mean,
-     good_duration_mean) = good_analyzed_experiments.get_mean_number_of_fixations_and_duration()
+     good_duration_mean) = good_analyzed_experiments.get_mean_fixations_count_and_duration()
 
     (bad_num_of_fixation_mean,
-     bad_duration_mean) = bad_analyzed_experiments.get_mean_number_of_fixations_and_duration()
+     bad_duration_mean) = bad_analyzed_experiments.get_mean_fixations_count_and_duration()
 
     fixations_fig, _ = return_bar_graph(
         ["Good Eyesight", "Bad Eyesight"],
@@ -112,6 +170,43 @@ def create_graphs_of_good_vs_bad_eyesight_fixation_data(
 
     return fixations_fig, duration_fig
 
+
+def create_fixations_count_and_duration_k_means_graph(
+        good_analyzed_experiments: AnalyzedExperiments,
+        bad_analyzed_experiments: AnalyzedExperiments) -> tuple[plt.figure, plt.figure]:
+    """
+    :param bad_analyzed_experiments: AnalyzedExperiments class of experiment of people with good eyesight.
+    :param good_analyzed_experiments: AnalyzedExperiments class of experiment of people with bad eyesight
+    :return: A graph representing the
+    """
+    (good_list_of_fixation_count,
+     good_duration_mean_list) = good_analyzed_experiments.get_list_of_mean_fixations_count_and_duration_per_experiment()
+    good_fixations_durations = list(zip(good_list_of_fixation_count, good_duration_mean_list))
+
+    (bad_list_of_fixation_count,
+     bad_duration_mean_list) = bad_analyzed_experiments.get_list_of_mean_fixations_count_and_duration_per_experiment()
+    bad_fixations_durations = list(zip(bad_list_of_fixation_count, bad_duration_mean_list))
+
+    fixations_counts = good_list_of_fixation_count + bad_list_of_fixation_count
+    duration_means = good_duration_mean_list + bad_duration_mean_list
+
+    fixations_count_and_duration_divided_to_good_bad_graph, _ = create_scattered_graph(
+        {"Good Eyesight": good_fixations_durations, "Bad Eyesight": bad_fixations_durations},
+        {"Good Eyesight": GREEN, "Bad Eyesight": RED},
+        "fixation count",
+        "fixation duration",
+        "Fixation count vs fixation duration for each experiment")
+    fixations_count_and_duration_divided_to_good_bad_graph.show()
+
+    fixations_count_and_duration_k_means_graph, _ = create_scattered_k_means_graph(
+        list(zip(fixations_counts, duration_means)),
+        2,
+        "fixation count",
+        "fixations duration",
+        "Fixation count vs fixation duration -K Means"
+    )
+
+    return fixations_count_and_duration_divided_to_good_bad_graph, fixations_count_and_duration_k_means_graph
 
 def calculate_mean_of_lists_values(num_lists_: list[list[float]]) -> list[float | None]:
     mean_list: list[float | None] = [
@@ -134,7 +229,7 @@ def get_gaze_variance_graphs(good_analyzed_experiments: AnalyzedExperiments,
         in bad_analyzed_experiments.experiment_gaze_variances_sorted_by_time.keys()
     }
 
-    fig_variance, ax = return_scattered_or_line_graph(
+    fig_variance, ax = create_scattered_or_line_graph_sorted_by_time(
         {**good_analyzed_experiments.experiment_gaze_variances_sorted_by_time,
          **bad_analyzed_experiments.experiment_gaze_variances_sorted_by_time},
         {**good_experiments_id_to_color, **bad_experiments_id_to_color},
@@ -144,7 +239,7 @@ def get_gaze_variance_graphs(good_analyzed_experiments: AnalyzedExperiments,
         GraphType.Scattered
     )
 
-    # create scatter plot of all of the experiment's mean variance.
+    # create scatter plot of all the experiment's mean variance.
     good_variances_means: list[float | None] = calculate_mean_of_lists_values(
         [variances for variances
          in good_analyzed_experiments.experiment_gaze_variances_sorted_by_time.values()]
@@ -154,7 +249,7 @@ def get_gaze_variance_graphs(good_analyzed_experiments: AnalyzedExperiments,
          in bad_analyzed_experiments.experiment_gaze_variances_sorted_by_time.values()]
     )
 
-    fig_variance_mean, _ = return_scattered_or_line_graph(
+    fig_variance_mean, _ = create_scattered_or_line_graph_sorted_by_time(
         {"Good Eyesight": good_variances_means, "Bad Eyesight": bad_variances_means},
         {"Good Eyesight": GREEN, "Bad Eyesight": RED},
         "Time passed",
@@ -180,8 +275,8 @@ def get_fixations_variance_graphs(good_analyzed_experiments: AnalyzedExperiments
     bad_eyesight_fixation_average_sorted_by_time = [fixation_count / bad_eyesight_num_of_experiment
                                                     for fixation_count
                                                     in bad_eyesight_fixation_count_sorted_by_time]
-
-    fig_fixation_count, _ = return_scattered_or_line_graph(
+    # Time is in seconds
+    fig_fixation_count, _ = create_scattered_or_line_graph_sorted_by_time(
         {"Good Eyesight": good_eyesight_fixation_average_sorted_by_time,
          "Bad Eyesight": bad_eyesight_fixation_average_sorted_by_time},
         {"Good Eyesight": GREEN, "Bad Eyesight": RED},
@@ -196,7 +291,6 @@ def get_fixations_variance_graphs(good_analyzed_experiments: AnalyzedExperiments
 
 def get_blink_graphs(good_analyzed_experiments: AnalyzedExperiments,
                      bad_analyzed_experiments: AnalyzedExperiments):
-
     (good_num_of_blink_mean,
      good_blink_num_mean) = good_analyzed_experiments.get_mean_number_of_blinks_and_duration()
 

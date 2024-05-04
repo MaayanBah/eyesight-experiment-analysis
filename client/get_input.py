@@ -6,7 +6,7 @@ raw_data_must_have_files: set[str] = {
     "blinks.csv", "events.csv", "fixations.csv", "gaze.csv", "imu.csv", "world_timestamps.csv", "info.json"
 }
 reference_data_must_have_files: set[str] = {"fixations.csv", "gaze.csv", "sections.csv"}
-mapped_gaze_must_have_files: set[str] = {"gaze.csv"}
+mapped_gaze_must_have_files: set[str] = {"gaze.csv", "fixations.csv"}
 
 
 def assert_necessary_files(directory_path: str,
@@ -20,7 +20,9 @@ def assert_necessary_files(directory_path: str,
     directory_listdir: set[str] = set(os.listdir(directory_path))
     missing_files: set[str] = must_have_files.difference(directory_listdir)
     if len(missing_files) > 0:
-        raise FileNotFoundError(f"The directory is missing the files: {missing_files}")
+        raise FileNotFoundError(
+            f"The directory is missing the files: {missing_files}\ndirectory path: {directory_path}"
+        )
 
 
 def get_single_experiment_directories() -> tuple[str, str, str]:

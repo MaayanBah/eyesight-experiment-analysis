@@ -32,12 +32,13 @@ def screen_location_variance(screen_locations: set[ScreenLocation],
 
 def get_mapped_gaze_start_time_to_end_time(experiments: list[Experiment]) -> tuple[int, int]:
     latest_first_saccade_time_ns: int = max(
-        experiment.mapped_gaze_on_video.gaze["time passed from start [ns]"].iloc[0]
+        experiment.mapped_gaze_on_video.gaze["timestamp [ns]"].iloc[0]
         for experiment in experiments
     )
 
+
     earliest_last_saccade_time_ns: int = min(
-        experiment.mapped_gaze_on_video.gaze["time passed from start [ns]"].iloc[-1]
+        experiment.mapped_gaze_on_video.gaze["timestamp [ns]"].iloc[-1]
         for experiment in experiments
     )
 
@@ -46,12 +47,13 @@ def get_mapped_gaze_start_time_to_end_time(experiments: list[Experiment]) -> tup
 
 def get_raw_data_fixation_start_time_to_end_time(experiments: list[Experiment]) -> tuple[int, int]:
     latest_first_fixation_time_ns: int = max(
-        experiment.reference_data.fixations["start timestamp [ns]"].iloc[0]
+        experiment.mapped_gaze_on_video.fixations["start timestamp [ns]"].iloc[0]
         for experiment in experiments
     )
+    print(latest_first_fixation_time_ns)
 
     earliest_last_fixation_time_ns: int = min(
-        experiment.reference_data.fixations["start timestamp [ns]"].iloc[-1]
+        experiment.mapped_gaze_on_video.fixations["start timestamp [ns]"].iloc[-1]
         for experiment in experiments
     )
 
@@ -113,8 +115,8 @@ class AnalyzedExperiment:
         :return: The number of fixations between the first and second events and the mean duration of these fixations
                  (in milliseconds).
         """
-        # The fication df is already filtered within the specified time range of the video.
-        fixation_df = self.experiment.reference_data.fixations
+        # The fixation df is already filtered within the specified time range of the video.
+        fixation_df = self.experiment.mapped_gaze_on_video.fixations
 
         # Calculate the number of fixations and average fixation duration
         num_fixations = len(fixation_df)
@@ -130,15 +132,15 @@ class AnalyzedExperiment:
         for current_start_time in range(parameters.fixation_start_time,
                                         parameters.fixation_end_time,
                                         parameters.delta_time):
-            experiment_fixation = experiment.reference_data.fixations
+            experiment_fixation = experiment.mapped_gaze_on_video.fixations
             fixations_in_time_period: pandas.DataFrame = experiment_fixation[
                 (current_start_time <= experiment_fixation["start timestamp [ns]"])
                 & (experiment_fixation["start timestamp [ns]"] < current_start_time + parameters.delta_time)
-            ]
+                ]
 
             locations_in_time_period = set(fixations_in_time_period.apply(
-                lambda row: ScreenLocation(row["fixation x [px]"],
-                                           row["fixation y [px]"]),
+                lambda row: ScreenLocation(row["fixation position transf y[px]"],
+                                           row["fixation position transf x[px]"]),
                 axis=1)
             )
 
@@ -171,9 +173,9 @@ class AnalyzedExperiment:
         for current_start_time in range(parameters.gaze_start_time, parameters.gaze_end_time, parameters.delta_time):
             experiment_gaze = experiment.mapped_gaze_on_video.gaze
             gazes_in_time_period: pandas.DataFrame = experiment_gaze[
-                (current_start_time <= experiment_gaze["time passed from start [ns]"])
-                & (experiment_gaze["time passed from start [ns]"] < current_start_time + parameters.delta_time)
-            ]
+                (current_start_time <= experiment_gaze["timestamp [ns]"])
+                & (experiment_gaze["timestamp [ns]"] < current_start_time + parameters.delta_time)
+                ]
 
             locations_in_time_period = set(gazes_in_time_period.apply(
                 lambda row: ScreenLocation(row["gaze position transf x [px]"],
@@ -273,8 +275,8 @@ class AnalyzedExperiments:
                     screen_location
                     for analyzed_experiment in self.__analyzed_experiments.values()
                     for screen_location in analyzed_experiment.fixation_locations_sorted_by_time[
-                     fixation_time_to_index(period_start_time, self.__parameters)
-                     ]
+                    fixation_time_to_index(period_start_time, self.__parameters)
+                ]
                 }
             )
             for period_start_time in range(self.__parameters.fixation_start_time,
@@ -289,15 +291,16 @@ class AnalyzedExperiments:
     def fixation_count_sorted_by_time(self) -> list[int]:
         fixation_count_sorted_by_time: list[int] = [
             sum(
-                    len(analyzed_experiment.fixation_locations_sorted_by_time[
-                     fixation_time_to_index(period_start_time, self.__parameters)
-                        ])
-                    for analyzed_experiment in self.__analyzed_experiments.values()
+                len(analyzed_experiment.fixation_locations_sorted_by_time[
+                        fixation_time_to_index(period_start_time, self.__parameters)
+                    ])
+                for analyzed_experiment in self.__analyzed_experiments.values()
             )
             for period_start_time in range(self.__parameters.fixation_start_time,
                                            self.__parameters.fixation_end_time,
                                            self.__parameters.delta_time)
         ]
+
         return fixation_count_sorted_by_time
 
     @property
@@ -343,7 +346,7 @@ class AnalyzedExperiments:
         return sum_blinks / len(self.__experiments), sum_mean_duration / len(self.__experiments)
 
     @lru_cache(maxsize=1)
-    def get_mean_number_of_fixations_and_duration(self) -> tuple[float, float]:
+    def get_mean_fixations_count_and_duration(self) -> tuple[float, float]:
         sum_fixations, sum_duration = 0, 0
 
         for analyzed_experiment_id, analyzed_experiment in self.__analyzed_experiments.items():
@@ -356,3 +359,15 @@ class AnalyzedExperiments:
         duration_mean: float = sum_duration / len(self.__analyzed_experiments.keys())
 
         return fixations_mean, duration_mean
+
+    @lru_cache(maxsize=1)
+    def get_list_of_mean_fixations_count_and_duration_per_experiment(self) -> tuple[list[int], list[int]]:
+        fixations_list = []
+        duration_list = []
+
+        for analyzed_experiment_id, analyzed_experiment in self.__analyzed_experiments.items():
+            num_fixations, duration_mean = analyzed_experiment.get_num_of_fixation_and_mean_duration_in_video()
+            fixations_list.append(num_fixations)
+            duration_list.append(duration_mean)
+
+        return fixations_list, duration_list

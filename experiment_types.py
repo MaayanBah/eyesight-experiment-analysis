@@ -44,6 +44,7 @@ class ReferenceData:
 @dataclass
 class MappedGazeOnVideo:
     gaze: pd.DataFrame
+    fixations: pd.DataFrame
 
 
 @dataclass
@@ -58,6 +59,7 @@ class ExperimentInput:
 class Info:
     recording_id: str
 
+
 class Experiment:
     __available_id: int = 0
 
@@ -68,20 +70,14 @@ class Experiment:
         # todo fix! theres an actual id.
         self.__id: int = Experiment.__available_id
         self.__eyesight: Eyesight = experiment_input.eyesight
-        self.__raw_data: RawData = Experiment.__parse_raw_data_dir(experiment_input.raw_data_dir_path)
+        self.__raw_data: RawData = self.__parse_raw_data_dir(experiment_input.raw_data_dir_path)
         self.__info: Info = Experiment.__parse_info_file(
             os.path.join(experiment_input.raw_data_dir_path, "info.json")
         )
-        self.__video_start_timestamp = self.raw_data.events.loc[
-            self.raw_data.events["name"] == "start.video", "timestamp [ns]"
-        ].values[0]
-        self.__video_end_timestamp = self.raw_data.events.loc[
-            self.raw_data.events["name"] == "end.video", "timestamp [ns]"
-        ].values[0]
         self.__reference_data: ReferenceData = self.__parse_reference_image_data(
             experiment_input.reference_data_dir_path
         )
-        self.__mapped_gaze_on_video: MappedGazeOnVideo = Experiment.__parse_mapped_gaze_on_video(
+        self.__mapped_gaze_on_video: MappedGazeOnVideo = self.__parse_mapped_gaze_on_video(
             experiment_input.mapped_gaze_on_video_dir_path
         )
 
@@ -129,12 +125,21 @@ class Experiment:
 
         return Info(recording_id)
 
-    @staticmethod
-    def __parse_raw_data_dir(raw_data_dir_path: str) -> RawData:
+    def __parse_raw_data_dir(self, raw_data_dir_path: str) -> RawData:
         """
         :param raw_data_dir_path: The raw data dir as it was downloaded from Pupil Cloud.
         :return: The parsed data from the directory's files.
         """
+        events_headers: list[str] = ["recording id", "timestamp [ns]", "name", "type"]
+        events_path: str = rf"{raw_data_dir_path}\events.csv"
+        events_df: pd.DataFrame = pd.read_csv(events_path, names=events_headers, skiprows=1)
+
+        self.__video_start_timestamp = events_df.loc[
+            events_df["name"] == "start.video", "timestamp [ns]"
+        ].values[0]
+        self.__video_end_timestamp = events_df.loc[
+            events_df["name"] == "end.video", "timestamp [ns]"
+        ].values[0]
         blinks_headers: list[str] = ["section id", "recording id", "blink id",
                                      "start timestamp [ns]", "end timestamp [ns]", "duration [ms]"]
         blinks_path: str = rf"{raw_data_dir_path}\blinks.csv"
@@ -142,27 +147,24 @@ class Experiment:
         blink_int_columns: list[str] = ["start timestamp [ns]", "end timestamp [ns]", "duration [ms]"]
         blinks_df[blink_int_columns] = blinks_df[blink_int_columns].astype(np.int64)
 
-        events_headers: list[str] = ["recording id", "timestamp [ns]", "name", "type"]
-        events_path: str = rf"{raw_data_dir_path}\events.csv"
-        events_df: pd.DataFrame = pd.read_csv(events_path, names=events_headers, skiprows=1)
-
         fixations_headers: list[str] = ["section id", "recording id", "fixation id", "start timestamp [ns]",
                                         "end timestamp [ns]", "duration [ms]", "fixation x [px]", "fixation y [px]",
                                         "azimuth [deg]", "elevation [deg]"]
         fixations_path: str = rf"{raw_data_dir_path}\fixations.csv"
-        fixations_df: pd.DataFrame = pd.read_csv(fixations_path, names=fixations_headers, skiprows=1)
-        fixations_int_columns: list[str] = ["start timestamp [ns]", "end timestamp [ns]", "duration [ms]"]
         fixations_float_columns: list[str] = ["fixation x [px]", "fixation y [px]"]
-        fixations_df[fixations_int_columns] = fixations_df[fixations_int_columns].astype(np.int64)
-        fixations_df[fixations_float_columns] = fixations_df[fixations_float_columns].astype(float)
+        fixations_int_columns: list[str] = ["start timestamp [ns]", "end timestamp [ns]", "duration [ms]"]
+        fixations_df = self.__create_basic_df_with_timestamps(
+            fixations_headers, ["start timestamp [ns]", "end timestamp [ns]"], fixations_float_columns,
+            fixations_int_columns, fixations_path)
 
-        gaze_headers: list[str] = ["section id", "recording id", "timestamp [ns]", "gaze x [px]", "gaze y [px]",
-                                   "worn", "fixation id", "blink id", "azimuth [deg]", "elevation [deg]"]
+        gaze_headers: list[str] = [
+            "section id", "recording id", "timestamp [ns]", "gaze x [px]", "gaze y [px]", "worn", "fixation id",
+            "blink id", "azimuth [deg]", "elevation [deg]"
+        ]
         gaze_path: str = rf"{raw_data_dir_path}\gaze.csv"
-        gaze_df: pd.DataFrame = pd.read_csv(gaze_path, names=gaze_headers, skiprows=1, sep=",",
-                                            dtype={"section id": str, "recording id": str, "timestamp [ns]": str,
-                                                   "gaze x [px]": str, "gaze y [px]": str, "worn,fixation id": str,
-                                                   "blink id,azimuth [deg]": str, "elevation [deg]": str})
+        gaze_df: pd.DataFrame = self.__create_basic_df_with_timestamps(
+            gaze_headers, ["timestamp [ns]"], [],
+            [], gaze_path)
 
         imu_headers: list[str] = ["section id", "recording id", "timestamp [ns]", "gyro x [deg/s]", "gyro y [deg/s]",
                                   "gyro z [deg/s]", "acceleration x [G]", "acceleration y [G]", "acceleration z [G]",
@@ -170,7 +172,9 @@ class Experiment:
                                   "quaternion y",
                                   "quaternion z"]
         imu_path: str = rf"{raw_data_dir_path}\imu.csv"
-        imu_df: pd.DataFrame = pd.read_csv(imu_path, names=imu_headers, skiprows=1)
+        imu_df: pd.DataFrame = self.__create_basic_df_with_timestamps(
+            imu_headers, ["timestamp [ns]"], [],
+            [], imu_path)
 
         world_timestamps_headers: list[str] = ["section id", "recording id", "timestamp [ns]"]
         world_timestamps_path: str = rf"{raw_data_dir_path}\world_timestamps.csv"
@@ -184,68 +188,88 @@ class Experiment:
                                         "end timestamp [ns]", "duration [ms]", "fixation detected in reference image",
                                         "fixation x [px]", "fixation y [px]"]
         fixations_path: str = rf"{reference_data_dir_path}\fixations.csv"
-        fixations_df: pd.DataFrame = pd.read_csv(fixations_path, names=fixations_headers, skiprows=1)
+        fixations_df: pd.DataFrame = self.__create_basic_df_with_timestamps(
+            fixations_headers, ["start timestamp [ns]", "end timestamp [ns]"], [],
+            [], fixations_path)
         # Filter fixation data within the specified time range
         fixations_df = fixations_df[fixations_df["recording id"] == self.recording_id]
-        print(self.__video_start_timestamp)
-        fixations_df = self.__adjust_timestamps(
-            fixations_df,
-            "start timestamp [ns]",
-            "end timestamp [ns]"
-        )
 
         gaze_headers: list[str] = ["section id", "recording id", "timestamp [ns]", " gaze detected in reference image",
                                    "gaze position in reference image x [px]", "gaze position in reference image y [px]",
                                    "fixation id"]
         gaze_path: str = rf"{reference_data_dir_path}\gaze.csv"
-        gaze_df: pd.DataFrame = pd.read_csv(gaze_path, names=gaze_headers, skiprows=1)
+        gaze_df: pd.DataFrame = self.__create_basic_df_with_timestamps(
+            gaze_headers, ["timestamp [ns]"], [], [], gaze_path)
 
-        sections_headers: list[str] = ["section id", "recording id", "recording name", "wearer id", "wearer name",
-                                       "section start time [ns]", "section end time [ns]",
-                                       "start event name", "end event name"]
+        # Note that the timestamp in section_df are raw and not minus the video start event.
+        sections_headers: list[str] = [
+            "section id", "recording id", "recording name", "wearer id", "wearer name", "section start time [ns]",
+            "section end time [ns]", "start event name", "end event name"]
         sections_path: str = rf"{reference_data_dir_path}\sections.csv"
         sections_df: pd.DataFrame = pd.read_csv(sections_path, names=sections_headers, skiprows=1)
 
         return ReferenceData(fixations_df, gaze_df, sections_df)
 
-    @staticmethod
-    def __parse_mapped_gaze_on_video(mapped_gaze_on_video_path: str) -> MappedGazeOnVideo:
+    def __parse_mapped_gaze_on_video(self, mapped_gaze_on_video_path: str) -> MappedGazeOnVideo:
         gaze_headers: list[str] = [
             "section id", "recording id", "timestamp [ns]", "gaze detected in reference image",
             "gaze position in reference image x [px]", "gaze position in reference image y [px]", "fixation id",
             "recording name", "wearer id", "wearer name", "section start time [ns]", "section end time [ns]",
             "start event name", "end event name", "gaze position transf x [px]", "gaze position transf y [px]"
         ]
-        gaze_path: str = os.path.join(mapped_gaze_on_video_path, "gaze.csv")
-        gaze_df: pd.DataFrame = pd.read_csv(gaze_path, names=gaze_headers, skiprows=1)
-
-        float_columns: list[str] = [
+        gaze_float_columns: list[str] = [
             "gaze position in reference image x [px]", "gaze position in reference image y [px]",
             "gaze position transf x [px]", "gaze position transf y [px]"
         ]
-        gaze_df[float_columns] = gaze_df[float_columns].astype(float)
+        gaze_int_columns: list[str] = ["timestamp [ns]", "section start time [ns]", "section end time [ns]"]
+        gaze_path: str = os.path.join(mapped_gaze_on_video_path, "gaze.csv")
+        gaze_df: pd.DataFrame = self.__create_basic_df_with_timestamps(
+            gaze_headers, ["timestamp [ns]"], gaze_float_columns, gaze_int_columns, gaze_path
+        )
 
-        int_columns: list[str] = ["timestamp [ns]", "section start time [ns]", "section end time [ns]"]
-        gaze_df[int_columns] = gaze_df[int_columns].astype(np.int64)
-        gaze_df["time passed from start [ns]"] = gaze_df["timestamp [ns]"] - gaze_df["section start time [ns]"]
+        fixations_headers: list[str] = [
+            "section id", "recording id", "fixation id", "start timestamp [ns]", "end timestamp [ns]", "duration [ms]",
+            "fixation detected in reference image", "fixation position in reference image x[px]",
+            "fixation position in reference image y[px]", "recording name", "wearer id",
+            "wearer name", "section start time[ns]", "section end time[ns]", "start event name", "end event name",
+            "fixation position transf x[px]", "fixation position transf y[px]"
+        ]
+        fixations_float_columns: list[str] = [
+            "fixation position in reference image x[px]", "fixation position in reference image y[px]",
+            "fixation position transf x[px]", "fixation position transf y[px]"
+        ]
+        fixations_int_columns: list[str] = ["start timestamp [ns]", "end timestamp [ns]", "duration [ms]"]
 
-        return MappedGazeOnVideo(gaze_df)
+        fixations_path: str = os.path.join(mapped_gaze_on_video_path, "fixations.csv")
+        fixations_df = self.__create_basic_df_with_timestamps(
+            fixations_headers, ["start timestamp [ns]", "end timestamp [ns]"],
+            fixations_float_columns, fixations_int_columns, fixations_path
+        )
 
-    def __adjust_timestamps(self,
-                            df: pd.DataFrame,
-                            event_start_timestamp_column_name: str,
-                            event_end_timestamp_column_name: str) -> pd.DataFrame:
-        # # Filter data within the specified time range
-        df = df[
-            (df[event_start_timestamp_column_name] >= self.__video_start_timestamp) &
-            (df[event_start_timestamp_column_name] <= self.__video_end_timestamp) &
-            (df[event_end_timestamp_column_name] >= self.__video_start_timestamp) &
-            (df[event_end_timestamp_column_name] <= self.__video_end_timestamp)
-            ]
-        print(df.get(["start timestamp [ns]", "end timestamp [ns]"]).head(5))
-        df.loc[:, event_start_timestamp_column_name] -= self.__video_start_timestamp
-        df.loc[:, event_end_timestamp_column_name] -= self.__video_start_timestamp
-        print(df.get(["start timestamp [ns]", "end timestamp [ns]"]).head(5))
+        return MappedGazeOnVideo(gaze_df, fixations_df)
 
+    def __adjust_timestamps_to_match_video(self,
+                                           df: pd.DataFrame,
+                                           timestamp_columns: list[str]) -> pd.DataFrame:
+        # Filter data within the specified time range
+        condition = True
+        for timestamp_column in timestamp_columns:
+            condition &= ((df[timestamp_column] >= self.__video_start_timestamp) &
+                          (df[timestamp_column] <= self.__video_end_timestamp))
+        df = df[condition]
+        for timestamp_column in timestamp_columns:
+            df.loc[:, timestamp_column] -= self.__video_start_timestamp
 
+        return df
+
+    def __create_basic_df_with_timestamps(self, headers: list[str],
+                                          timestamp_columns: list[str],
+                                          float_columns: list[str],
+                                          int_columns: list[str],
+                                          path: str,
+                                          dtypes=None) -> pd.DataFrame:
+        df: pd.DataFrame = pd.read_csv(path, names=headers, skiprows=1, sep=",", dtype=dtypes)
+        df[float_columns] = df[float_columns].astype(float)
+        df[int_columns] = df[int_columns].astype(np.int64)
+        df = self.__adjust_timestamps_to_match_video(df, timestamp_columns)
         return df
