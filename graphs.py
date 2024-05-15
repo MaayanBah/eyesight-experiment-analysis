@@ -114,14 +114,15 @@ def create_scattered_k_means_graph(locations_list,
     ax.scatter(
         [x_y[0] for x_y in locations_list],
         [x_y[1] for x_y in locations_list],
-        c=kmeans.labels_)
+        c=kmeans.labels_,
+        label='Clusters')
 
     # Add labels and title
     ax.set_xlabel(x_label)
     ax.set_ylabel(y_label)
     ax.set_title(title)
 
-    ax.legend
+    ax.legend()
 
     return fig, ax
 
@@ -196,7 +197,6 @@ def create_fixations_count_and_duration_k_means_graph(
         "fixation count",
         "fixation duration",
         "Fixation count vs fixation duration for each experiment")
-    fixations_count_and_duration_divided_to_good_bad_graph.show()
 
     fixations_count_and_duration_k_means_graph, _ = create_scattered_k_means_graph(
         list(zip(fixations_counts, duration_means)),

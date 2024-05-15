@@ -60,7 +60,7 @@ def create_graphs(good_analyzed_experiments: AnalyzedExperiments,
 
 
 def main():
-    # let the users choose their preferred input method and use it.
+    # let the users choose their preferred input method and use it
     input_one_by_one: bool = show_yes_no_dialog("Do you want to insert the experiments one by one?")
     experiments_input: list[ExperimentInput] = get_user_input(one_by_one=input_one_by_one)
 
@@ -70,7 +70,7 @@ def main():
 
     graphs: list[plt.figure] = create_graphs(good_analyzed_experiments,
                                              bad_analyzed_experiments)
-    matplotlib_figures_to_pdf("graphs",
+    matplotlib_figures_to_pdf("assets/graphs",
                               *graphs)
     # todo change df names to const names
     # todo parse input including dtypes and data modification
