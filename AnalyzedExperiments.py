@@ -108,7 +108,7 @@ class AnalyzedExperiment:
     def parameters(self):
         return self.__parameters
 
-    @lru_cache(maxsize=3)
+    @lru_cache(maxsize=80)
     def get_num_of_fixation_and_mean_duration_in_video(self) -> tuple[int, int]:
         """
         :return: The number of fixations between the first and second events and the mean duration of these fixations
@@ -146,7 +146,7 @@ class AnalyzedExperiment:
             fixations_locations_by_time.append(locations_in_time_period)
         return fixations_locations_by_time
 
-    @lru_cache(maxsize=3)
+    @lru_cache(maxsize=80)
     def get_num_of_blinks_and_mean_duration_in_video(self) -> tuple[int, int]:
         blinks_df = self.experiment.raw_data.blinks
 
@@ -164,16 +164,18 @@ class AnalyzedExperiment:
 
         return num_blinks, average_blinks_duration
 
-    @staticmethod
-    def split_screen_locations_by_time(experiment: Experiment,
-                                       parameters: AnalyzedExperimentsParameters) -> list[set[ScreenLocation]]:
+    @property
+    @lru_cache(maxsize=80)
+    def screen_locations_sorted_by_time(self) -> list[set[ScreenLocation]]:
         screen_locations_by_time: list[set[ScreenLocation]] = []
 
-        for current_start_time in range(parameters.gaze_start_time, parameters.gaze_end_time, parameters.delta_time):
-            experiment_gaze = experiment.mapped_gaze_on_video.gaze
+        for current_start_time in range(self.parameters.gaze_start_time,
+                                        self.parameters.gaze_end_time,
+                                        self.parameters.delta_time):
+            experiment_gaze = self.experiment.mapped_gaze_on_video.gaze
             gazes_in_time_period: pandas.DataFrame = experiment_gaze[
                 (current_start_time <= experiment_gaze["timestamp [ns]"])
-                & (experiment_gaze["timestamp [ns]"] < current_start_time + parameters.delta_time)
+                & (experiment_gaze["timestamp [ns]"] < current_start_time + self.parameters.delta_time)
                 ]
 
             locations_in_time_period = set(gazes_in_time_period.apply(
@@ -186,16 +188,15 @@ class AnalyzedExperiment:
 
         return screen_locations_by_time
 
-    @property
-    @lru_cache(maxsize=3)
-    def screen_locations_sorted_by_time(self):
-        screen_locations_sorted_by_time: list[set[ScreenLocation]] = (
-            AnalyzedExperiment.split_screen_locations_by_time(self.experiment, self.parameters)
-        )
-        return screen_locations_sorted_by_time
+    # @property
+    # def screen_locations_sorted_by_time(self):
+    #     screen_locations_sorted_by_time: list[set[ScreenLocation]] = (
+    #         AnalyzedExperiment.split_screen_locations_by_time(self.experiment, self.parameters)
+    #     )
+    #     return screen_locations_sorted_by_time
 
     @property
-    @lru_cache(maxsize=3)
+    @lru_cache(maxsize=80)
     def fixation_locations_sorted_by_time(self):
         fixation_locations_sorted_by_time: list[set[ScreenLocation]] = (
             AnalyzedExperiment.split_fixations_by_time(self.experiment, self.parameters)
@@ -203,7 +204,7 @@ class AnalyzedExperiment:
         return fixation_locations_sorted_by_time
 
     @property
-    @lru_cache(maxsize=3)
+    @lru_cache(maxsize=80)
     def average_screen_locations(self) -> list[ScreenLocation]:
         average_screen_locations: list[ScreenLocation] = [
             average_screen_location(screen_locations)
@@ -212,7 +213,7 @@ class AnalyzedExperiment:
         return average_screen_locations
 
     @property
-    @lru_cache(maxsize=3)
+    @lru_cache(maxsize=80)
     def average_fixation_locations(self) -> list[ScreenLocation]:
         average_fixation_locations: list[ScreenLocation] = [
             average_screen_location(screen_locations)
@@ -247,7 +248,10 @@ class AnalyzedExperiments:
 
     @property
     @lru_cache(maxsize=3)
-    def average_screen_locations_sorted_by_time(self):
+    def average_screen_locations_sorted_by_time(self) -> list[ScreenLocation]:
+        """
+        :return: Average screen locations of all the experiments.
+        """
         average_screen_locations_sorted_by_time: list[ScreenLocation] = [
             average_screen_location(
                 {
