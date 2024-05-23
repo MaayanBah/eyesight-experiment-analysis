@@ -34,8 +34,10 @@ def create_scattered_or_line_graph_sorted_by_time(group_name_to_locations: dict[
                                                   x_label: str,
                                                   y_label: str,
                                                   title: str,
-                                                  graph_type: GraphType) -> tuple[plt.figure, any]:
+                                                  graph_type: GraphType,
+                                                  dot_size: int = 20) -> tuple[plt.figure, any]:
     """
+    :param dot_size: The dots size.
     :param group_name_to_locations: group name to it's values sorted by time, if for a certain time there's no data
                                 fill it with None - all groups must have the same list length.
                                 The same group can have several lists.
@@ -52,7 +54,7 @@ def create_scattered_or_line_graph_sorted_by_time(group_name_to_locations: dict[
         if graph_type == GraphType.Scattered:
             ax.scatter([x for x in range(1, len(locations) + 1)],
                        locations, color=group_name_to_color[group_name],
-                       label=group_name, s=20)
+                       label=group_name, s=dot_size)
         else:
             ax.plot([x for x in range(1, len(locations) + 1)],
                     locations, color=group_name_to_color[group_name],
@@ -73,8 +75,10 @@ def create_scattered_graph(group_name_to_locations: dict[str, list[tuple[float, 
                            group_name_to_color: dict[str, str],
                            x_label: str,
                            y_label: str,
-                           title: str) -> tuple[plt.figure, any]:
+                           title: str,
+                           dot_size:int =20) -> tuple[plt.figure, any]:
     """
+    :param dot_size:
     :param group_name_to_locations: A dictionary from group name to a list of x, y indexes tuple.
     :param group_name_to_color: A dictionary from group name to the color of it in the plot.
     :param x_label: The X axis title.
@@ -88,7 +92,7 @@ def create_scattered_graph(group_name_to_locations: dict[str, list[tuple[float, 
         ax.scatter([location[0] for location in locations],
                    [location[1] for location in locations],
                    color=group_name_to_color[group_name],
-                   label=group_name, s=20)
+                   label=group_name, s=dot_size)
 
         # Add labels and title
         ax.set_xlabel(x_label)
@@ -237,7 +241,8 @@ def get_gaze_variance_graphs(good_analyzed_experiments: AnalyzedExperiments,
         "Time",
         "Gaze Variance",
         "Variance (Screen Coordinates)",
-        GraphType.Scattered
+        GraphType.Scattered,
+        3
     )
 
     # create scatter plot of all the experiment's mean variance.

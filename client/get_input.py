@@ -66,10 +66,10 @@ def get_all_together():
         for experiment in os.listdir(experiments_dir_path):
             experiment_dir: str = os.path.join(experiments_dir_path, experiment)
 
-            raw_data_directory_path: str = os.path.join(experiment_dir, "raw_data")
+            raw_data_directory_path: str = os.path.join(experiment_dir, "raw")
             assert_necessary_files(raw_data_directory_path, raw_data_must_have_files)
 
-            reference_data_directory_path: str = os.path.join(experiment_dir, "reference_data")
+            reference_data_directory_path: str = os.path.join(experiment_dir, "rim")
             assert_necessary_files(reference_data_directory_path, reference_data_must_have_files)
 
             mapped_gaze_directory_path: str = os.path.join(experiment_dir, "mapped_gaze")
