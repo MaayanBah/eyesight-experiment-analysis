@@ -36,7 +36,6 @@ def get_mapped_gaze_start_time_to_end_time(experiments: list[Experiment]) -> tup
         for experiment in experiments
     )
 
-
     earliest_last_saccade_time_ns: int = min(
         experiment.mapped_gaze_on_video.gaze["timestamp [ns]"].iloc[-1]
         for experiment in experiments
@@ -109,7 +108,7 @@ class AnalyzedExperiment:
     def parameters(self):
         return self.__parameters
 
-    @lru_cache(maxsize=1)
+    @lru_cache(maxsize=3)
     def get_num_of_fixation_and_mean_duration_in_video(self) -> tuple[int, int]:
         """
         :return: The number of fixations between the first and second events and the mean duration of these fixations
@@ -147,7 +146,7 @@ class AnalyzedExperiment:
             fixations_locations_by_time.append(locations_in_time_period)
         return fixations_locations_by_time
 
-    @lru_cache(maxsize=1)
+    @lru_cache(maxsize=3)
     def get_num_of_blinks_and_mean_duration_in_video(self) -> tuple[int, int]:
         blinks_df = self.experiment.raw_data.blinks
 
@@ -157,7 +156,7 @@ class AnalyzedExperiment:
             (blinks_df["start timestamp [ns]"] <= self.experiment.video_end_timestamp) &
             (blinks_df["end timestamp [ns]"] >= self.experiment.video_start_timestamp) &
             (blinks_df["end timestamp [ns]"] <= self.experiment.video_end_timestamp)
-        ]
+            ]
 
         # Calculate the number of blinks and average blinks duration
         num_blinks = len(blinks_during_event)
@@ -188,7 +187,7 @@ class AnalyzedExperiment:
         return screen_locations_by_time
 
     @property
-    @lru_cache(maxsize=1)
+    @lru_cache(maxsize=3)
     def screen_locations_sorted_by_time(self):
         screen_locations_sorted_by_time: list[set[ScreenLocation]] = (
             AnalyzedExperiment.split_screen_locations_by_time(self.experiment, self.parameters)
@@ -196,7 +195,7 @@ class AnalyzedExperiment:
         return screen_locations_sorted_by_time
 
     @property
-    @lru_cache(maxsize=1)
+    @lru_cache(maxsize=3)
     def fixation_locations_sorted_by_time(self):
         fixation_locations_sorted_by_time: list[set[ScreenLocation]] = (
             AnalyzedExperiment.split_fixations_by_time(self.experiment, self.parameters)
@@ -204,7 +203,7 @@ class AnalyzedExperiment:
         return fixation_locations_sorted_by_time
 
     @property
-    @lru_cache(maxsize=1)
+    @lru_cache(maxsize=3)
     def average_screen_locations(self) -> list[ScreenLocation]:
         average_screen_locations: list[ScreenLocation] = [
             average_screen_location(screen_locations)
@@ -213,7 +212,7 @@ class AnalyzedExperiment:
         return average_screen_locations
 
     @property
-    @lru_cache(maxsize=1)
+    @lru_cache(maxsize=3)
     def average_fixation_locations(self) -> list[ScreenLocation]:
         average_fixation_locations: list[ScreenLocation] = [
             average_screen_location(screen_locations)
@@ -247,7 +246,7 @@ class AnalyzedExperiments:
         return self.__analyzed_experiments
 
     @property
-    @lru_cache(maxsize=1)
+    @lru_cache(maxsize=3)
     def average_screen_locations_sorted_by_time(self):
         average_screen_locations_sorted_by_time: list[ScreenLocation] = [
             average_screen_location(
@@ -255,8 +254,8 @@ class AnalyzedExperiments:
                     screen_location
                     for analyzed_experiment in self.__analyzed_experiments.values()
                     for screen_location in analyzed_experiment.screen_locations_sorted_by_time[
-                     gaze_time_to_index(period_start_time, self.__parameters)
-                     ]
+                    gaze_time_to_index(period_start_time, self.__parameters)
+                ]
                 }
             )
             for period_start_time in range(self.__parameters.gaze_start_time,
@@ -267,7 +266,7 @@ class AnalyzedExperiments:
         return average_screen_locations_sorted_by_time
 
     @property
-    @lru_cache(maxsize=1)
+    @lru_cache(maxsize=3)
     def average_fixation_locations_sorted_by_time(self):
         average_fixation_locations_sorted_by_time: list[ScreenLocation] = [
             average_screen_location(
@@ -287,7 +286,7 @@ class AnalyzedExperiments:
         return average_fixation_locations_sorted_by_time
 
     @property
-    @lru_cache(maxsize=1)
+    @lru_cache(maxsize=3)
     def fixation_count_sorted_by_time(self) -> list[int]:
         fixation_count_sorted_by_time: list[int] = [
             sum(
@@ -304,8 +303,12 @@ class AnalyzedExperiments:
         return fixation_count_sorted_by_time
 
     @property
-    @lru_cache(maxsize=1)
+    @lru_cache(maxsize=3)
     def experiment_gaze_variances_sorted_by_time(self):
+        """
+        :return: This function return the gaze location variance sorted by time.
+        it is calculated using the average gaze of all the experiments in the class divided by time periods.
+        """
         experiment_variances_sorted_by_time: dict[int, list[float]] = {
             experiment.id: [
                 screen_location_variance(screen_locations, average_screen_location_)
@@ -320,7 +323,7 @@ class AnalyzedExperiments:
         return experiment_variances_sorted_by_time
 
     @property
-    @lru_cache(maxsize=1)
+    @lru_cache(maxsize=3)
     def experiment_fixation_variances_sorted_by_time(self):
         experiment_variances_sorted_by_time: dict[int, list[float]] = {
             experiment.id: [
@@ -335,7 +338,7 @@ class AnalyzedExperiments:
 
         return experiment_variances_sorted_by_time
 
-    @lru_cache(maxsize=1)
+    @lru_cache(maxsize=3)
     def get_mean_number_of_blinks_and_duration(self):
         sum_blinks, sum_mean_duration = 0, 0
         for analyzed_experiment_id, analyzed_experiment in self.__analyzed_experiments.items():
@@ -345,7 +348,7 @@ class AnalyzedExperiments:
 
         return sum_blinks / len(self.__experiments), sum_mean_duration / len(self.__experiments)
 
-    @lru_cache(maxsize=1)
+    @lru_cache(maxsize=3)
     def get_mean_fixations_count_and_duration(self) -> tuple[float, float]:
         sum_fixations, sum_duration = 0, 0
 
@@ -360,7 +363,7 @@ class AnalyzedExperiments:
 
         return fixations_mean, duration_mean
 
-    @lru_cache(maxsize=1)
+    @lru_cache(maxsize=3)
     def get_list_of_mean_fixations_count_and_duration_per_experiment(self) -> tuple[list[int], list[int]]:
         fixations_list = []
         duration_list = []

@@ -6,7 +6,6 @@ from itertools import zip_longest
 from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
 
-
 RED: str = "#FF6161"
 GREEN: str = "#68D47A"
 BLUE: str = "#6C79CB"
@@ -126,6 +125,7 @@ def create_scattered_k_means_graph(locations_list,
 
     return fig, ax
 
+
 def matplotlib_figures_to_pdf(pdf_name: str, *figures: plt.figure) -> None:
     """
     :param pdf_name: The name of the PDF file.
@@ -207,6 +207,7 @@ def create_fixations_count_and_duration_k_means_graph(
     )
 
     return fixations_count_and_duration_divided_to_good_bad_graph, fixations_count_and_duration_k_means_graph
+
 
 def calculate_mean_of_lists_values(num_lists_: list[list[float]]) -> list[float | None]:
     mean_list: list[float | None] = [

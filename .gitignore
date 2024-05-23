@@ -1,3 +1,8 @@
-.idea
+.idea/
 *.pyc
 venv
+tests
+temp.py
+assets/graphs.pdf
+graphs_old.pdf
+
