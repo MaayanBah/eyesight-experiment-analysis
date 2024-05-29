@@ -8,11 +8,11 @@ import json
 
 
 class Eyesight(Enum):
-    def __str__(self):
-        return "good" if self.value == 1 else "bad"
-
     GOOD = 1
     BAD = 2
+
+    def __str__(self):
+        return "Good Eyesight" if self == Eyesight.GOOD else "Bad Eyesight"
 
 
 @dataclass(frozen=True)

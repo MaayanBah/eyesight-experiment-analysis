@@ -1,14 +1,18 @@
 from __future__ import annotations
 from enum import Enum
+
+import matplotlib
 from matplotlib.backends.backend_pdf import PdfPages
-from AnalyzedExperiments import AnalyzedExperiments
+from AnalyzedExperiments import AnalyzedExperiments, AnalyzedExperiment
 from itertools import zip_longest
 from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
+from experiment_types import Eyesight
 
 RED: str = "#FF6161"
 GREEN: str = "#68D47A"
 BLUE: str = "#6C79CB"
+LIGHT_GREY: str = "#E3E4E2"
 
 
 class GraphType(Enum):
@@ -35,8 +39,10 @@ def create_scattered_or_line_graph_sorted_by_time(group_name_to_locations: dict[
                                                   y_label: str,
                                                   title: str,
                                                   graph_type: GraphType,
-                                                  dot_size: int = 20) -> tuple[plt.figure, any]:
+                                                  dot_size: int = 20,
+                                                  line_width: float = 1) -> tuple[plt.figure, any]:
     """
+    :param line_width:
     :param dot_size: The dots size.
     :param group_name_to_locations: group name to it's values sorted by time, if for a certain time there's no data
                                 fill it with None - all groups must have the same list length.
@@ -58,7 +64,8 @@ def create_scattered_or_line_graph_sorted_by_time(group_name_to_locations: dict[
         else:
             ax.plot([x for x in range(1, len(locations) + 1)],
                     locations, color=group_name_to_color[group_name],
-                    label=group_name)
+                    label=group_name,
+                    linewidth=line_width)
 
         # Add labels and title
         ax.set_xlabel(x_label)
@@ -76,7 +83,7 @@ def create_scattered_graph(group_name_to_locations: dict[str, list[tuple[float, 
                            x_label: str,
                            y_label: str,
                            title: str,
-                           dot_size:int =20) -> tuple[plt.figure, any]:
+                           dot_size: int = 20) -> tuple[plt.figure, any]:
     """
     :param dot_size:
     :param group_name_to_locations: A dictionary from group name to a list of x, y indexes tuple.
@@ -250,6 +257,7 @@ def get_gaze_variance_graphs(good_analyzed_experiments: AnalyzedExperiments,
         [variances for variances
          in good_analyzed_experiments.experiment_gaze_variances_sorted_by_time.values()]
     )
+
     bad_variances_means: list[float | None] = calculate_mean_of_lists_values(
         [variances for variances
          in bad_analyzed_experiments.experiment_gaze_variances_sorted_by_time.values()]
@@ -315,3 +323,87 @@ def get_blink_graphs(good_analyzed_experiments: AnalyzedExperiments,
                                             "Blink Duration (Average)",
                                             "Average Blink Duration [ms]")
     return mean_num_of_blinks_fig, mean_duration_fig
+
+
+def get_x_Y_coordinates_through_time_graphs(good_analyzed_experiments: AnalyzedExperiments,
+                                            bad_analyzed_experiments: AnalyzedExperiments):
+    experiments_x = {Eyesight.GOOD: {},
+                     Eyesight.BAD: {}}
+    experiments_y = {Eyesight.GOOD: {},
+                     Eyesight.BAD: {}}
+    for experiment_id, analyzed_experiment in good_analyzed_experiments.analyzed_experiments.items():
+        indexes_x = [screen_location.x for screen_location in analyzed_experiment.average_screen_locations]
+        indexes_y = [screen_location.y for screen_location in analyzed_experiment.average_screen_locations]
+        experiments_x[Eyesight.GOOD][experiment_id] = indexes_x
+        experiments_y[Eyesight.GOOD][experiment_id] = indexes_y
+
+    for experiment_id, analyzed_experiment in bad_analyzed_experiments.analyzed_experiments.items():
+        indexes_x = [screen_location.x for screen_location in analyzed_experiment.average_screen_locations]
+        indexes_y = [screen_location.y for screen_location in analyzed_experiment.average_screen_locations]
+        experiments_x[Eyesight.BAD][experiment_id] = indexes_x
+        experiments_y[Eyesight.BAD][experiment_id] = indexes_y
+
+    good_experiment_average_x: list[float] = [
+        index.x for index in good_analyzed_experiments.average_screen_locations_sorted_by_time
+    ]
+    bad_experiment_average_x: list[float] = [
+        index.x for index in bad_analyzed_experiments.average_screen_locations_sorted_by_time
+    ]
+
+    good_experiment_average_y: list[float] = [
+        index.y for index in good_analyzed_experiments.average_screen_locations_sorted_by_time
+    ]
+    bad_experiment_average_y: list[float] = [
+        index.y for index in bad_analyzed_experiments.average_screen_locations_sorted_by_time
+    ]
+
+    good_experiments_id_to_color = {
+        experiment_id: LIGHT_GREY for experiment_id
+        in good_analyzed_experiments.experiment_gaze_variances_sorted_by_time.keys()
+    }
+    bad_experiments_id_to_color = {
+        experiment_id: LIGHT_GREY for experiment_id
+        in bad_analyzed_experiments.experiment_gaze_variances_sorted_by_time.keys()
+    }
+
+    fig_x_values, _ = create_scattered_or_line_graph_sorted_by_time(
+        {
+            **experiments_x[Eyesight.GOOD],
+            **experiments_x[Eyesight.BAD],
+            "Good Eyesight average": good_experiment_average_x,
+            "Bad Eyesight average": bad_experiment_average_x
+        },
+        {
+            **good_experiments_id_to_color,
+            **bad_experiments_id_to_color,
+            "Good Eyesight average": GREEN,
+            "Bad Eyesight average": RED
+        },
+        "Time",
+        "x value",
+        "name",
+        GraphType.Line,
+        line_width=1
+    )
+
+    fig_y_values, _ = create_scattered_or_line_graph_sorted_by_time(
+        {
+            **experiments_y[Eyesight.GOOD],
+            **experiments_y[Eyesight.BAD],
+            "Good Eyesight average": good_experiment_average_y,
+            "Bad Eyesight average": bad_experiment_average_y
+        },
+        {
+            **good_experiments_id_to_color,
+            **bad_experiments_id_to_color,
+            "Good Eyesight average": GREEN,
+            "Bad Eyesight average": RED
+        },
+        "Time",
+        "y value",
+        "name",
+        GraphType.Line,
+        line_width=1
+    )
+
+    return fig_x_values, fig_y_values

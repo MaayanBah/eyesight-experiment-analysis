@@ -4,7 +4,8 @@ from client.dialog_methods import show_yes_no_dialog
 from graphs import (create_graphs_of_good_vs_bad_eyesight_fixation_data,
                     matplotlib_figures_to_pdf, get_gaze_variance_graphs, get_blink_graphs,
                     get_fixations_variance_graphs,
-                    create_fixations_count_and_duration_k_means_graph)
+                    create_fixations_count_and_duration_k_means_graph,
+                    get_x_Y_coordinates_through_time_graphs)
 from AnalyzedExperiments import (AnalyzedExperiments, AnalyzedExperimentsParameters,
                                  split_experiments_by_eyesight, get_mapped_gaze_start_time_to_end_time,
                                  get_raw_data_fixation_start_time_to_end_time)
@@ -51,12 +52,17 @@ def create_graphs(good_analyzed_experiments: AnalyzedExperiments,
         good_analyzed_experiments, bad_analyzed_experiments
     )
 
+    (x_coordinates_through_time_fig,
+     y_coordinates_through_time_fig) = get_x_Y_coordinates_through_time_graphs(
+        good_analyzed_experiments, bad_analyzed_experiments
+    )
+
     return [num_of_fixations_fig_sorted_by_time,
             num_of_fixations_fig, fixation_duration_fig,
             fixations_count_and_duration_divided_to_good_bad_graph,
             fixations_count_and_duration_k_means_graph,
             num_of_blinks_fig, blinks_duration_fig,
-            variance_fig, variance_mean_fig]
+            variance_fig, variance_mean_fig, x_coordinates_through_time_fig, y_coordinates_through_time_fig]
 
 
 def main():

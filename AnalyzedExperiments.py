@@ -49,7 +49,6 @@ def get_raw_data_fixation_start_time_to_end_time(experiments: list[Experiment]) 
         experiment.mapped_gaze_on_video.fixations["start timestamp [ns]"].iloc[0]
         for experiment in experiments
     )
-    print(latest_first_fixation_time_ns)
 
     earliest_last_fixation_time_ns: int = min(
         experiment.mapped_gaze_on_video.fixations["start timestamp [ns]"].iloc[-1]
@@ -167,6 +166,11 @@ class AnalyzedExperiment:
     @property
     @lru_cache(maxsize=80)
     def screen_locations_sorted_by_time(self) -> list[set[ScreenLocation]]:
+        """
+        :return: A list of sets containing ScreenLocations objects.
+        Each set includes all gazes within the specified time period, and the list of sets is ordered by time.
+        """
+
         screen_locations_by_time: list[set[ScreenLocation]] = []
 
         for current_start_time in range(self.parameters.gaze_start_time,
@@ -183,17 +187,9 @@ class AnalyzedExperiment:
                                            row["gaze position transf y [px]"]),
                 axis=1)
             )
-
             screen_locations_by_time.append(locations_in_time_period)
 
         return screen_locations_by_time
-
-    # @property
-    # def screen_locations_sorted_by_time(self):
-    #     screen_locations_sorted_by_time: list[set[ScreenLocation]] = (
-    #         AnalyzedExperiment.split_screen_locations_by_time(self.experiment, self.parameters)
-    #     )
-    #     return screen_locations_sorted_by_time
 
     @property
     @lru_cache(maxsize=80)
@@ -206,6 +202,11 @@ class AnalyzedExperiment:
     @property
     @lru_cache(maxsize=80)
     def average_screen_locations(self) -> list[ScreenLocation]:
+        """
+        :return: The average gaze screen location. Each ScreenLocation object will contain the average indices
+        for the specific time period, and the output list is sorted by the time period.
+        """
+
         average_screen_locations: list[ScreenLocation] = [
             average_screen_location(screen_locations)
             for screen_locations in self.screen_locations_sorted_by_time
@@ -215,6 +216,10 @@ class AnalyzedExperiment:
     @property
     @lru_cache(maxsize=80)
     def average_fixation_locations(self) -> list[ScreenLocation]:
+        """
+        :return: The average fixation screen location. Each ScreenLocation object will contain the average indices
+        for the specific time period, and the output list is sorted by the time period.
+        """
         average_fixation_locations: list[ScreenLocation] = [
             average_screen_location(screen_locations)
             for screen_locations in self.fixation_locations_sorted_by_time
@@ -250,7 +255,7 @@ class AnalyzedExperiments:
     @lru_cache(maxsize=3)
     def average_screen_locations_sorted_by_time(self) -> list[ScreenLocation]:
         """
-        :return: Average screen locations of all the experiments.
+        :return: Average screen locations of all the experiments together.
         """
         average_screen_locations_sorted_by_time: list[ScreenLocation] = [
             average_screen_location(
@@ -378,3 +383,17 @@ class AnalyzedExperiments:
             duration_list.append(duration_mean)
 
         return fixations_list, duration_list
+
+    # @property
+    # @lru_cache(maxsize=3)
+    # def average_screen_locations_sorted_by_time(self):
+    #     average_fixation_locations_sorted_by_time: list[ScreenLocation] = [
+    #         average_screen_location(
+    #             {
+    #                 screen_location
+    #                 for analyzed_experiment in self.__analyzed_experiments.values()
+    #                 for screen_location in analyzed_experiment.fixation_locations_sorted_by_time[
+    #                 fixation_time_to_index(period_start_time, self.__parameters)
+    #             ]
+    #             }
+    #         )
