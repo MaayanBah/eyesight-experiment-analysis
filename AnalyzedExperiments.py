@@ -1,3 +1,6 @@
+from __future__ import annotations
+
+import statistics
 from dataclasses import dataclass
 import pandas
 from experiment_types import Experiment, Eyesight, ScreenLocation
@@ -42,6 +45,27 @@ def get_mapped_gaze_start_time_to_end_time(experiments: list[Experiment]) -> tup
     )
 
     return latest_first_saccade_time_ns, earliest_last_saccade_time_ns
+
+
+def limit_standard_deviation(values: list[int | float], max_deviation: float) -> list[int | float]:
+    """
+    Filters the input list to include only values within a specified number of standard deviations from the mean.
+    :param values: A list of numeric values.
+    :param max_deviation: The maximum number of standard deviations from the mean that a value can be.
+    :return: A list of values that do not exceed the specified number of standard deviations from the mean.
+    """
+    if not values:
+        return values
+
+    mean = statistics.mean(values)
+    standard_deviation = statistics.stdev(values)
+
+    lower_bound = mean - max_deviation * standard_deviation
+    upper_bound = mean + max_deviation * standard_deviation
+
+    filtered_values = [x for x in values if lower_bound <= x <= upper_bound]
+    return filtered_values
+
 
 
 def get_raw_data_fixation_start_time_to_end_time(experiments: list[Experiment]) -> tuple[int, int]:
@@ -295,20 +319,18 @@ class AnalyzedExperiments:
         return average_fixation_locations_sorted_by_time
 
     @property
-    @lru_cache(maxsize=3)
-    def fixation_count_sorted_by_time(self) -> list[int]:
-        fixation_count_sorted_by_time: list[int] = [
-            sum(
+    def fixation_count_sorted_by_time(self) -> list[list[int]]:
+        fixation_count_sorted_by_time: list[list[int]] = [
+            [
                 len(analyzed_experiment.fixation_locations_sorted_by_time[
                         fixation_time_to_index(period_start_time, self.__parameters)
                     ])
                 for analyzed_experiment in self.__analyzed_experiments.values()
-            )
+            ]
             for period_start_time in range(self.__parameters.fixation_start_time,
                                            self.__parameters.fixation_end_time,
                                            self.__parameters.delta_time)
         ]
-
         return fixation_count_sorted_by_time
 
     @property

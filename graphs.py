@@ -1,16 +1,18 @@
 from __future__ import annotations
-from enum import Enum
 
-import matplotlib
+import statistics
+from enum import Enum
 from matplotlib.backends.backend_pdf import PdfPages
-from AnalyzedExperiments import AnalyzedExperiments, AnalyzedExperiment
+from AnalyzedExperiments import AnalyzedExperiments, limit_standard_deviation
 from itertools import zip_longest
 from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
 from experiment_types import Eyesight
 
-RED: str = "#FF6161"
-GREEN: str = "#68D47A"
+RED: str = "#F29999"
+DARK_RED: str = "#873030"
+GREEN: str = "#A9DCB0"
+DARK_GREEN: str = "#365A2B"
 BLUE: str = "#6C79CB"
 LIGHT_GREY: str = "#E3E4E2"
 
@@ -137,16 +139,26 @@ def create_scattered_k_means_graph(locations_list,
     return fig, ax
 
 
-def matplotlib_figures_to_pdf(pdf_name: str, *figures: plt.figure) -> None:
+def matplotlib_figures_to_pdf(pdf_path: str, *figures: plt.figure) -> None:
     """
-    :param pdf_name: The name of the PDF file.
+    :param pdf_path: The path of the PDF file.
     :param figures: Figure of the graphs you want to present in the PDF file.
     :return: None, but creates a PDF with the given figures.
     """
-    pdf_pages: PdfPages = PdfPages(f"{pdf_name}.pdf")
-    for fig in figures:
-        pdf_pages.savefig(fig)
-    pdf_pages.close()
+    tries = 0
+    while tries < 3:
+        output_full_path = f"{pdf_path}.pdf" if tries == 0 else f"{pdf_path}_{tries}.pdf"
+        try:
+            pdf_pages: PdfPages = PdfPages(output_full_path)
+            for fig in figures:
+                pdf_pages.savefig(fig)
+            pdf_pages.close()
+            return
+        except OSError:
+            tries += 1
+            print(f"The file '{output_full_path}' cannot be created or accessed, creating the file under a different"
+                  f" name: {pdf_path}_{tries}")
+    raise OSError(f"Error: The file '{pdf_path}' cannot be created or accessed. It may be open in another application.")
 
 
 def create_graphs_of_good_vs_bad_eyesight_fixation_data(
@@ -276,31 +288,68 @@ def get_gaze_variance_graphs(good_analyzed_experiments: AnalyzedExperiments,
 
 
 def get_fixations_variance_graphs(good_analyzed_experiments: AnalyzedExperiments,
-                                  bad_analyzed_experiments: AnalyzedExperiments):
-    good_eyesight_fixation_count_sorted_by_time: list[int] = good_analyzed_experiments.fixation_count_sorted_by_time
-    bad_eyesight_fixation_count_sorted_by_time: list[int] = bad_analyzed_experiments.fixation_count_sorted_by_time
+                                  bad_analyzed_experiments: AnalyzedExperiments) -> tuple[plt.figure, plt.figure]:
+    good_eyesight_fixation_count_sorted_by_time: list[list[int]] = (
+        good_analyzed_experiments.fixation_count_sorted_by_time
+    )
+    bad_eyesight_fixation_count_sorted_by_time: list[list[int]] = (
+        bad_analyzed_experiments.fixation_count_sorted_by_time
+    )
 
-    good_eyesight_num_of_experiment: int = len(good_analyzed_experiments.analyzed_experiments)
-    bad_eyesight_num_of_experiment: int = len(bad_analyzed_experiments.analyzed_experiments)
+    good_eyesight_fixation_count_sorted_by_time_limited_stdev: list[list[int]] = [
+        limit_standard_deviation(fixation_count, max_deviation=2)
+        for fixation_count in good_eyesight_fixation_count_sorted_by_time
+    ]
+    good_eyesight_stdev: list[int | float] = [
+        statistics.stdev(x) for x in good_eyesight_fixation_count_sorted_by_time_limited_stdev
+    ]
+    bad_eyesight_fixation_count_sorted_by_time_limited_stdev: list[list[int]] = [
+        limit_standard_deviation(fixation_count, max_deviation=2)
+        for fixation_count in bad_eyesight_fixation_count_sorted_by_time
+    ]
+    bad_eyesight_stdev: list[int | float] = [
+        statistics.stdev(x) for x in bad_eyesight_fixation_count_sorted_by_time_limited_stdev
+    ]
 
-    good_eyesight_fixation_average_sorted_by_time = [fixation_count / good_eyesight_num_of_experiment
-                                                     for fixation_count
-                                                     in good_eyesight_fixation_count_sorted_by_time]
-    bad_eyesight_fixation_average_sorted_by_time = [fixation_count / bad_eyesight_num_of_experiment
-                                                    for fixation_count
-                                                    in bad_eyesight_fixation_count_sorted_by_time]
-    # Time is in seconds
+    good_eyesight_fixation_average_sorted_by_time = [
+        sum(fixation_count) / len(fixation_count) for fixation_count
+        in good_eyesight_fixation_count_sorted_by_time_limited_stdev
+    ]
+    bad_eyesight_fixation_average_sorted_by_time = [
+        sum(fixation_count) / len(fixation_count) for fixation_count
+        in bad_eyesight_fixation_count_sorted_by_time_limited_stdev
+    ]
+
     fig_fixation_count, _ = create_scattered_or_line_graph_sorted_by_time(
-        {"Good Eyesight": good_eyesight_fixation_average_sorted_by_time,
-         "Bad Eyesight": bad_eyesight_fixation_average_sorted_by_time},
-        {"Good Eyesight": GREEN, "Bad Eyesight": RED},
+        {
+            "Good Eyesight": good_eyesight_fixation_average_sorted_by_time,
+            "Bad Eyesight": bad_eyesight_fixation_average_sorted_by_time
+        },
+        {
+            "Good Eyesight": GREEN,
+            "Bad Eyesight": RED
+        },
         "Time",
         "Fixations (Average)",
         "Average Number of Fixations",
         GraphType.Line
     )
 
-    return fig_fixation_count
+    fig_fixation_count_stdev, _ = create_scattered_or_line_graph_sorted_by_time(
+        {
+            "Good Eyesight Standard deviation": good_eyesight_stdev,
+            "Bad Eyesight Standard deviation": bad_eyesight_stdev
+        },
+        {
+            "Good Eyesight Standard deviation": DARK_GREEN,
+            "Bad Eyesight Standard deviation": DARK_RED
+        },
+        "Time",
+        "Fixations Count Standard Decision",
+        "Fixations Count Standard Decision",
+        GraphType.Line
+    )
+    return fig_fixation_count, fig_fixation_count_stdev
 
 
 def get_blink_graphs(good_analyzed_experiments: AnalyzedExperiments,
@@ -382,8 +431,7 @@ def get_x_Y_coordinates_through_time_graphs(good_analyzed_experiments: AnalyzedE
         "Time",
         "x value",
         "name",
-        GraphType.Line,
-        line_width=1
+        GraphType.Line
     )
 
     fig_y_values, _ = create_scattered_or_line_graph_sorted_by_time(
@@ -403,7 +451,6 @@ def get_x_Y_coordinates_through_time_graphs(good_analyzed_experiments: AnalyzedE
         "y value",
         "name",
         GraphType.Line,
-        line_width=1
     )
 
     return fig_x_values, fig_y_values

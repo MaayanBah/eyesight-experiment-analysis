@@ -67,7 +67,6 @@ class Experiment:
                  experiment_input: ExperimentInput):
         Experiment.__available_id += 1
 
-        # todo fix! theres an actual id.
         self.__id: int = Experiment.__available_id
         self.__eyesight: Eyesight = experiment_input.eyesight
         self.__raw_data: RawData = self.__parse_raw_data_dir(experiment_input.raw_data_dir_path)
