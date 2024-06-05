@@ -68,7 +68,6 @@ def create_graphs(good_analyzed_experiments: AnalyzedExperiments,
 
 def main():
     # todo change df names to const names
-    # todo parse input including dtypes and data modification
 
     # let the users choose their preferred input method and use it
     input_one_by_one: bool = show_yes_no_dialog("Do you want to insert the experiments one by one?")

@@ -67,7 +67,6 @@ def limit_standard_deviation(values: list[int | float], max_deviation: float) ->
     return filtered_values
 
 
-
 def get_raw_data_fixation_start_time_to_end_time(experiments: list[Experiment]) -> tuple[int, int]:
     latest_first_fixation_time_ns: int = max(
         experiment.mapped_gaze_on_video.fixations["start timestamp [ns]"].iloc[0]
