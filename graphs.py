@@ -16,6 +16,7 @@ DARK_GREEN: str = "#87AB77"
 BLUE: str = "#6C79CB"
 LIGHT_GREY: str = "#E3E4E2"
 
+MAX_DEVIATION: int = 2
 
 class GraphType(Enum):
     Scattered = 1
@@ -303,8 +304,18 @@ def get_gaze_variance_graphs(good_analyzed_experiments: AnalyzedExperiments,
     return fig_variance, fig_variance_mean
 
 
-def get_fixations_variance_graphs(good_analyzed_experiments: AnalyzedExperiments,
-                                  bad_analyzed_experiments: AnalyzedExperiments) -> tuple[plt.figure, plt.figure]:
+def get_fixations_number_graphs(good_analyzed_experiments: AnalyzedExperiments,
+                                bad_analyzed_experiments: AnalyzedExperiments) -> tuple[plt.figure, plt.figure]:
+    """
+    :param good_analyzed_experiments: AnalyzedExperiments class of experiment of people with bad eyesight
+    :param bad_analyzed_experiments: AnalyzedExperiments class of experiment of people with good eyesight.
+     :return: Two graphs:
+        1. Fixation Mean Over Time: This graph shows the mean fixation values over time, excluding data points that
+         exceed 2 standard deviations from the mean in each time interval.
+        2. Standard Deviation Over Time: This graph displays the standard deviation of fixation values over time,
+         also excluding data points that exceed 2 standard deviations from the mean.
+
+    """
     good_eyesight_fixation_count_sorted_by_time: list[list[int]] = (
         good_analyzed_experiments.fixation_count_sorted_by_time
     )
@@ -313,14 +324,14 @@ def get_fixations_variance_graphs(good_analyzed_experiments: AnalyzedExperiments
     )
 
     good_eyesight_fixation_count_sorted_by_time_limited_stdev: list[list[int]] = [
-        limit_standard_deviation(fixation_count, max_deviation=2)
+        limit_standard_deviation(fixation_count, max_deviation=MAX_DEVIATION)
         for fixation_count in good_eyesight_fixation_count_sorted_by_time
     ]
     good_eyesight_stdev: list[int | float] = [
         statistics.stdev(x) for x in good_eyesight_fixation_count_sorted_by_time_limited_stdev
     ]
     bad_eyesight_fixation_count_sorted_by_time_limited_stdev: list[list[int]] = [
-        limit_standard_deviation(fixation_count, max_deviation=2)
+        limit_standard_deviation(fixation_count, max_deviation=MAX_DEVIATION)
         for fixation_count in bad_eyesight_fixation_count_sorted_by_time
     ]
     bad_eyesight_stdev: list[int | float] = [
