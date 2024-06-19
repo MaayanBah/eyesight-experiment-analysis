@@ -1,5 +1,5 @@
 from __future__ import annotations
-
+from configurations import MAX_DEVIATION
 import statistics
 from dataclasses import dataclass
 import pandas
@@ -7,15 +7,29 @@ from experiment_types import Experiment, Eyesight, ScreenLocation
 from functools import lru_cache
 
 
-def average_screen_location(screen_locations: set[ScreenLocation]) -> ScreenLocation | None:
+def average_screen_location(screen_locations: set[ScreenLocation],
+                            max_deviation: float | None = None) -> ScreenLocation | None:
+    """
+    :param screen_locations: A set if ScreenLocation objects.
+    :param max_deviation: The maximum number of standard deviations from the mean that a value can be.
+    :return: The average of the screen locations that do not exceed the specified number of standard deviations from
+     the mean.
+    """
     if len(screen_locations) == 0:
         return None
-    sum_x: float = 0
-    sum_y: float = 0
-    for screen_location in screen_locations:
-        sum_x += screen_location.x
-        sum_y += screen_location.y
-    return ScreenLocation(sum_x / len(screen_locations), sum_y / len(screen_locations))
+    if max_deviation is None:
+        x_mean = statistics.mean([screen_location.x for screen_location in screen_locations])
+        y_mean = statistics.mean([screen_location.y for screen_location in screen_locations])
+        return ScreenLocation(x_mean, y_mean)
+    x_limited_stdev = limit_standard_deviation(
+        [screen_location.x for screen_location in screen_locations],
+        max_deviation
+    )
+    y_limited_stddev = limit_standard_deviation(
+        [screen_location.y for screen_location in screen_locations],
+        max_deviation
+    )
+    return ScreenLocation(statistics.mean(x_limited_stdev), statistics.mean(y_limited_stddev))
 
 
 def screen_location_variance(screen_locations: set[ScreenLocation],
@@ -47,12 +61,14 @@ def get_mapped_gaze_start_time_to_end_time(experiments: list[Experiment]) -> tup
     return latest_first_saccade_time_ns, earliest_last_saccade_time_ns
 
 
-def limit_standard_deviation(values: list[int | float], max_deviation: float) -> list[int | float]:
+def limit_standard_deviation(values: list[int | float],
+                             max_deviation: float) -> list[int | float]:
     """
     Filters the input list to include only values within a specified number of standard deviations from the mean.
     :param values: A list of numeric values.
     :param max_deviation: The maximum number of standard deviations from the mean that a value can be.
-    :return: A list of values that do not exceed the specified number of standard deviations from the mean.
+    :return: A list of values that do not exceed the specified number of standard deviations from the mean, the
+    standard_deviation and mean
     """
     if not values:
         return values
@@ -274,10 +290,9 @@ class AnalyzedExperiments:
     def analyzed_experiments(self):
         return self.__analyzed_experiments
 
-    @property
-    @lru_cache(maxsize=3)
-    def average_screen_locations_sorted_by_time(self) -> list[ScreenLocation]:
+    def average_screen_locations_sorted_by_time(self, max_deviation: float | None = None) -> list[ScreenLocation]:
         """
+        :param max_deviation: The maximum number of standard deviations from the mean that a value can be.
         :return: Average screen locations of all the experiments together.
         """
         average_screen_locations_sorted_by_time: list[ScreenLocation] = [
@@ -288,7 +303,8 @@ class AnalyzedExperiments:
                     for screen_location in analyzed_experiment.screen_locations_sorted_by_time[
                     gaze_time_to_index(period_start_time, self.__parameters)
                 ]
-                }
+                },
+                max_deviation=max_deviation
             )
             for period_start_time in range(self.__parameters.gaze_start_time,
                                            self.__parameters.gaze_end_time,
@@ -344,7 +360,7 @@ class AnalyzedExperiments:
                 screen_location_variance(screen_locations, average_screen_location_)
                 for screen_locations, average_screen_location_ in zip(
                     self.__analyzed_experiments[experiment.id].screen_locations_sorted_by_time,
-                    self.average_screen_locations_sorted_by_time
+                    self.average_screen_locations_sorted_by_time()
                 )
             ]
             for experiment in self.__experiments
@@ -404,17 +420,3 @@ class AnalyzedExperiments:
             duration_list.append(duration_mean)
 
         return fixations_list, duration_list
-
-    # @property
-    # @lru_cache(maxsize=3)
-    # def average_screen_locations_sorted_by_time(self):
-    #     average_fixation_locations_sorted_by_time: list[ScreenLocation] = [
-    #         average_screen_location(
-    #             {
-    #                 screen_location
-    #                 for analyzed_experiment in self.__analyzed_experiments.values()
-    #                 for screen_location in analyzed_experiment.fixation_locations_sorted_by_time[
-    #                 fixation_time_to_index(period_start_time, self.__parameters)
-    #             ]
-    #             }
-    #         )

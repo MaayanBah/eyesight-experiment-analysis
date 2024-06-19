@@ -1,0 +1,8 @@
+MAX_DEVIATION = 2
+
+RED: str = "#F29999"
+DARK_RED: str = "#C46F6F"
+GREEN: str = "#A9DCB0"
+DARK_GREEN: str = "#87AB77"
+BLUE: str = "#6C79CB"
+LIGHT_GREY: str = "#E3E4E2"

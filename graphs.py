@@ -8,15 +8,8 @@ from itertools import zip_longest
 from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
 from experiment_types import Eyesight, ScreenLocation
+from configurations import MAX_DEVIATION, RED, DARK_RED, GREEN, DARK_GREEN, BLUE, LIGHT_GREY
 
-RED: str = "#F29999"
-DARK_RED: str = "#C46F6F"
-GREEN: str = "#A9DCB0"
-DARK_GREEN: str = "#87AB77"
-BLUE: str = "#6C79CB"
-LIGHT_GREY: str = "#E3E4E2"
-
-MAX_DEVIATION: int = 2
 
 class GraphType(Enum):
     Scattered = 1
@@ -387,7 +380,7 @@ def get_fixations_number_graphs(good_analyzed_experiments: AnalyzedExperiments,
 
 def get_blink_graphs(good_analyzed_experiments: AnalyzedExperiments,
                      bad_analyzed_experiments: AnalyzedExperiments):
-    def get_analyzed_experiment_graph_data(analyzed_experiments: AnalyzedExperiments):
+    def get_analyzed_experiment_data_for_blink_graphs(analyzed_experiments: AnalyzedExperiments):
         (num_of_blink_mean,
          blink_num_mean) = analyzed_experiments.get_mean_number_of_blinks_and_duration()
 
@@ -398,9 +391,9 @@ def get_blink_graphs(good_analyzed_experiments: AnalyzedExperiments,
         return num_of_blink_mean, blink_num_mean, analyzed_experiments_single_experiments_num_blinks
 
     (good_num_of_blink_mean, good_blink_num_mean,
-     good_experiments_single_experiments_num_blinks) = get_analyzed_experiment_graph_data(good_analyzed_experiments)
+     good_experiments_single_experiments_num_blinks) = get_analyzed_experiment_data_for_blink_graphs(good_analyzed_experiments)
     (bad_num_of_blink_mean, bad_blink_num_mean,
-     bad_experiments_single_experiments_num_blinks) = get_analyzed_experiment_graph_data(bad_analyzed_experiments)
+     bad_experiments_single_experiments_num_blinks) = get_analyzed_experiment_data_for_blink_graphs(bad_analyzed_experiments)
 
     mean_num_of_blinks_fig, _ = return_bar_graph([str(Eyesight.GOOD), str(Eyesight.BAD)],
                                                  [good_num_of_blink_mean, bad_num_of_blink_mean],
@@ -450,11 +443,11 @@ def get_x_Y_coordinates_through_time_graphs(good_analyzed_experiments: AnalyzedE
             experiments_y[experiment_id] = indexes_y
 
         experiment_average_x: list[float] = [
-            index.x for index in analyzed_experiments_group.average_screen_locations_sorted_by_time
+            index.x for index in analyzed_experiments_group.average_screen_locations_sorted_by_time(MAX_DEVIATION)
         ]
 
         experiment_average_y: list[float] = [
-            index.y for index in analyzed_experiments_group.average_screen_locations_sorted_by_time
+            index.y for index in analyzed_experiments_group.average_screen_locations_sorted_by_time(MAX_DEVIATION)
         ]
 
         experiments_id_to_color = {
@@ -463,6 +456,14 @@ def get_x_Y_coordinates_through_time_graphs(good_analyzed_experiments: AnalyzedE
         }
 
         return experiments_x, experiments_y, experiment_average_x, experiment_average_y, experiments_id_to_color
+
+    """
+    :param good_analyzed_experiments: AnalyzedExperiments class of experiment of people with bad eyesight
+    :param bad_analyzed_experiments: AnalyzedExperiments class of experiment of people with good eyesight.
+    :return: Graphs displaying the x-axis and y-axis locations over time. The average is highlighted in a different
+     color, and for each timestamp (in the average only), the data points included are those that do not exceed
+      the specified number of standard deviations from the mean.
+    """
 
     (good_experiments_x, good_experiments_y, good_experiment_average_x, good_experiment_average_y,
      good_experiments_id_to_color) = create_y_or_x_graph(good_analyzed_experiments, LIGHT_GREY)
