@@ -50,6 +50,7 @@ class MappedGazeOnVideo:
 @dataclass
 class ExperimentInput:
     eyesight: Eyesight
+    experiment_subject_id: str
     raw_data_dir_path: str
     reference_data_dir_path: str
     mapped_gaze_on_video_dir_path: str
@@ -79,6 +80,7 @@ class Experiment:
         self.__mapped_gaze_on_video: MappedGazeOnVideo = self.__parse_mapped_gaze_on_video(
             experiment_input.mapped_gaze_on_video_dir_path
         )
+        self.__experiment_subject_id: str = experiment_input.experiment_subject_id
 
     @property
     def id(self):

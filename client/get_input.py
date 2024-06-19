@@ -1,5 +1,5 @@
 import os
-from client.dialog_methods import display_message, get_directory_path, show_yes_no_dialog
+from client.dialog_methods import display_message, get_directory_path, show_yes_no_dialog, get_user_text_through_dialog
 from experiment_types import Eyesight, ExperimentInput
 
 raw_data_must_have_files: set[str] = {
@@ -50,7 +50,10 @@ def get_one_by_one():
                                       if show_yes_no_dialog("Does the subject have good eyesight?")
                                       else
                                       Eyesight.BAD)
+        experiment_subject_id: str = get_user_text_through_dialog("Subject ID", "Insert the experiment subject ID: ")
+        print(experiment_subject_id)
         experiments_inputs.append(ExperimentInput(subject_eyesight,
+                                                  experiment_subject_id,
                                                   *get_single_experiment_directories()))
         still_getting_input = show_yes_no_dialog("Do you want to insert another experiment?")
     return experiments_inputs
@@ -64,6 +67,7 @@ def get_all_together():
         experiments_dir_path: str = get_directory_path(f"{subjects_eyesight} eyesight directory")
 
         for experiment in os.listdir(experiments_dir_path):
+            experiment_subject_id: str = experiment.split("_")[-1]
             experiment_dir: str = os.path.join(experiments_dir_path, experiment)
 
             raw_data_directory_path: str = os.path.join(experiment_dir, "raw")
@@ -76,6 +80,7 @@ def get_all_together():
             assert_necessary_files(mapped_gaze_directory_path, mapped_gaze_must_have_files)
 
             experiments_inputs.append(ExperimentInput(subjects_eyesight,
+                                                      experiment_subject_id,
                                                       raw_data_directory_path,
                                                       reference_data_directory_path,
                                                       mapped_gaze_directory_path))
