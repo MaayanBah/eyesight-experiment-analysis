@@ -303,6 +303,25 @@ def get_gaze_variance_graphs(good_analyzed_experiments: AnalyzedExperiments,
 
 def get_fixations_number_graphs(good_analyzed_experiments: AnalyzedExperiments,
                                 bad_analyzed_experiments: AnalyzedExperiments) -> tuple[plt.figure, plt.figure]:
+    def get_group_data_for_graphs(analyzed_experiments: AnalyzedExperiments) -> tuple[list[int | float], list[int | float]]:
+        eyesight_fixation_count_sorted_by_time: list[list[int]] = (
+            analyzed_experiments.fixation_count_sorted_by_time
+        )
+        eyesight_fixation_count_sorted_by_time_limited_stdev: list[list[int]] = [
+            limit_standard_deviation(fixation_count, max_deviation=MAX_DEVIATION)
+            for fixation_count in eyesight_fixation_count_sorted_by_time
+        ]
+        eyesight_stdev: list[int | float] = [
+            statistics.stdev(x) for x in eyesight_fixation_count_sorted_by_time_limited_stdev
+        ]
+
+        eyesight_fixation_average_sorted_by_time = [
+            sum(fixation_count) / len(fixation_count) for fixation_count
+            in eyesight_fixation_count_sorted_by_time_limited_stdev
+        ]
+        return (eyesight_stdev,
+                eyesight_fixation_average_sorted_by_time)
+
     """
     :param good_analyzed_experiments: AnalyzedExperiments class of experiment of people with bad eyesight
     :param bad_analyzed_experiments: AnalyzedExperiments class of experiment of people with good eyesight.
@@ -313,36 +332,14 @@ def get_fixations_number_graphs(good_analyzed_experiments: AnalyzedExperiments,
          also excluding data points that exceed 2 standard deviations from the mean.
 
     """
-    good_eyesight_fixation_count_sorted_by_time: list[list[int]] = (
-        good_analyzed_experiments.fixation_count_sorted_by_time
+    (good_eyesight_stdev,
+     good_eyesight_fixation_average_sorted_by_time) = get_group_data_for_graphs(
+        good_analyzed_experiments
     )
-    bad_eyesight_fixation_count_sorted_by_time: list[list[int]] = (
-        bad_analyzed_experiments.fixation_count_sorted_by_time
+    (bad_eyesight_stdev,
+     bad_eyesight_fixation_average_sorted_by_time) = get_group_data_for_graphs(
+        bad_analyzed_experiments
     )
-
-    good_eyesight_fixation_count_sorted_by_time_limited_stdev: list[list[int]] = [
-        limit_standard_deviation(fixation_count, max_deviation=MAX_DEVIATION)
-        for fixation_count in good_eyesight_fixation_count_sorted_by_time
-    ]
-    good_eyesight_stdev: list[int | float] = [
-        statistics.stdev(x) for x in good_eyesight_fixation_count_sorted_by_time_limited_stdev
-    ]
-    bad_eyesight_fixation_count_sorted_by_time_limited_stdev: list[list[int]] = [
-        limit_standard_deviation(fixation_count, max_deviation=MAX_DEVIATION)
-        for fixation_count in bad_eyesight_fixation_count_sorted_by_time
-    ]
-    bad_eyesight_stdev: list[int | float] = [
-        statistics.stdev(x) for x in bad_eyesight_fixation_count_sorted_by_time_limited_stdev
-    ]
-
-    good_eyesight_fixation_average_sorted_by_time = [
-        sum(fixation_count) / len(fixation_count) for fixation_count
-        in good_eyesight_fixation_count_sorted_by_time_limited_stdev
-    ]
-    bad_eyesight_fixation_average_sorted_by_time = [
-        sum(fixation_count) / len(fixation_count) for fixation_count
-        in bad_eyesight_fixation_count_sorted_by_time_limited_stdev
-    ]
 
     fig_fixation_count, _ = create_time_series_scattered_or_line_graph_sorted_by_time(
         {
@@ -391,9 +388,13 @@ def get_blink_graphs(good_analyzed_experiments: AnalyzedExperiments,
         return num_of_blink_mean, blink_num_mean, analyzed_experiments_single_experiments_num_blinks
 
     (good_num_of_blink_mean, good_blink_num_mean,
-     good_experiments_single_experiments_num_blinks) = get_analyzed_experiment_data_for_blink_graphs(good_analyzed_experiments)
+     good_experiments_single_experiments_num_blinks) = get_analyzed_experiment_data_for_blink_graphs(
+        good_analyzed_experiments
+    )
     (bad_num_of_blink_mean, bad_blink_num_mean,
-     bad_experiments_single_experiments_num_blinks) = get_analyzed_experiment_data_for_blink_graphs(bad_analyzed_experiments)
+     bad_experiments_single_experiments_num_blinks) = get_analyzed_experiment_data_for_blink_graphs(
+        bad_analyzed_experiments
+    )
 
     mean_num_of_blinks_fig, _ = return_bar_graph([str(Eyesight.GOOD), str(Eyesight.BAD)],
                                                  [good_num_of_blink_mean, bad_num_of_blink_mean],
