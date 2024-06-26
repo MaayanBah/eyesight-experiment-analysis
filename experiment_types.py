@@ -51,6 +51,7 @@ class MappedGazeOnVideo:
 class ExperimentInput:
     eyesight: Eyesight
     experiment_subject_id: str
+    experiment_id: str
     raw_data_dir_path: str
     reference_data_dir_path: str
     mapped_gaze_on_video_dir_path: str
@@ -69,6 +70,8 @@ class Experiment:
         Experiment.__available_id += 1
 
         self.__id: int = Experiment.__available_id
+        self.__experiment_real_id: str = experiment_input.experiment_id
+        print(experiment_input.experiment_id)
         self.__eyesight: Eyesight = experiment_input.eyesight
         self.__raw_data: RawData = self.__parse_raw_data_dir(experiment_input.raw_data_dir_path)
         self.__info: Info = Experiment.__parse_info_file(
@@ -85,6 +88,14 @@ class Experiment:
     @property
     def id(self):
         return self.__id
+
+    @property
+    def experiment_subject_id(self):
+        return self.__experiment_subject_id
+
+    @property
+    def experiment_real_id(self):
+        return self.__experiment_real_id
 
     @property
     def eyesight(self):

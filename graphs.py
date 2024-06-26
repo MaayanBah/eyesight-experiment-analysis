@@ -381,10 +381,13 @@ def get_blink_graphs(good_analyzed_experiments: AnalyzedExperiments,
         (num_of_blink_mean,
          blink_num_mean) = analyzed_experiments.get_mean_number_of_blinks_and_duration()
 
-        analyzed_experiments_single_experiments_num_blinks: list[int] = [
-            analyzed_experiment.get_num_of_blinks_and_mean_duration_in_video()[0]
-            for analyzed_experiment_id, analyzed_experiment in analyzed_experiments.analyzed_experiments.items()
-        ]
+        analyzed_experiments_single_experiments_num_blinks: dict[str: int] = {
+            analyzed_experiment.experiment.experiment_real_id:
+                analyzed_experiment.get_num_of_blinks_and_mean_duration_in_video()[0]
+            for analyzed_experiment
+            in sorted(analyzed_experiments.analyzed_experiments.values(),
+                      key=lambda item: item.experiment.experiment_real_id)
+        }
         return num_of_blink_mean, blink_num_mean, analyzed_experiments_single_experiments_num_blinks
 
     (good_num_of_blink_mean, good_blink_num_mean,
@@ -411,13 +414,12 @@ def get_blink_graphs(good_analyzed_experiments: AnalyzedExperiments,
     single_experiments_num_of_blinks_fig, _ = create_scattered_graph(
         {
             str(Eyesight.GOOD): [
-                ScreenLocation(index, value)
-                for index, value in enumerate(good_experiments_single_experiments_num_blinks)
+                ScreenLocation(int(experiment_real_id), number_of_blinks)
+                for experiment_real_id, number_of_blinks in good_experiments_single_experiments_num_blinks.items()
             ],
             str(Eyesight.BAD): [
-                ScreenLocation(index, value)
-                for index, value in enumerate(bad_experiments_single_experiments_num_blinks,
-                                              start=len(bad_experiments_single_experiments_num_blinks))
+                ScreenLocation(int(experiment_real_id), number_of_blinks)
+                for experiment_real_id, number_of_blinks in bad_experiments_single_experiments_num_blinks.items()
             ]
         },
         {
