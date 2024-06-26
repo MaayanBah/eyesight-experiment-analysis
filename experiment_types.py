@@ -71,7 +71,6 @@ class Experiment:
 
         self.__id: int = Experiment.__available_id
         self.__experiment_real_id: str = experiment_input.experiment_id
-        print(experiment_input.experiment_id)
         self.__eyesight: Eyesight = experiment_input.eyesight
         self.__raw_data: RawData = self.__parse_raw_data_dir(experiment_input.raw_data_dir_path)
         self.__info: Info = Experiment.__parse_info_file(
@@ -132,8 +131,6 @@ class Experiment:
 
         # Extract the recording_id
         recording_id = data["recording_id"]
-
-        print("Recording ID:", recording_id)
 
         return Info(recording_id)
 

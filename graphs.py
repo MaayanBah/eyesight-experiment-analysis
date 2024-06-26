@@ -171,18 +171,33 @@ def matplotlib_figures_to_pdf(pdf_path: str, *figures: plt.figure) -> None:
 
 def create_graphs_of_good_vs_bad_eyesight_fixation_data(
         good_analyzed_experiments: AnalyzedExperiments,
-        bad_analyzed_experiments: AnalyzedExperiments) -> tuple[plt.figure, plt.figure]:
+        bad_analyzed_experiments: AnalyzedExperiments) -> tuple[plt.figure, ...]:
+    def get_data_for_graphs(analyzed_experiments: AnalyzedExperiments):
+        real_id_to_num_fixations: dict[str, int] = {}
+        real_id_to_duration_mean: dict[str, int] = {}
+        for analyzed_experiment in analyzed_experiments.analyzed_experiments.values():
+            num_fixations, duration_mean = analyzed_experiment.get_num_of_fixation_and_mean_duration_in_video()
+            real_id_to_num_fixations[analyzed_experiment.experiment.experiment_real_id] = num_fixations
+            real_id_to_duration_mean[analyzed_experiment.experiment.experiment_real_id] = duration_mean
+        (num_of_fixation_mean,
+         duration_mean) = analyzed_experiments.get_mean_fixations_count_and_duration()
+        return real_id_to_num_fixations, real_id_to_duration_mean, num_of_fixation_mean, duration_mean
+
     """
     :param bad_analyzed_experiments: AnalyzedExperiments class of experiment of people with good eyesight.
     :param good_analyzed_experiments: AnalyzedExperiments class of experiment of people with bad eyesight
     :return: A graph representing the mean number of fixations and the mean duration of it, divided by
              good and bad eyesight.
     """
-    (good_num_of_fixation_mean,
-     good_duration_mean) = good_analyzed_experiments.get_mean_fixations_count_and_duration()
+    (good_real_id_to_num_fixations,
+     good_real_id_to_duration_mean,
+     good_num_of_fixation_mean,
+     good_duration_mean) = get_data_for_graphs(good_analyzed_experiments)
 
-    (bad_num_of_fixation_mean,
-     bad_duration_mean) = bad_analyzed_experiments.get_mean_fixations_count_and_duration()
+    (bad_real_id_to_num_fixations,
+     bad_real_id_to_duration_mean,
+     bad_num_of_fixation_mean,
+     bad_duration_mean) = get_data_for_graphs(bad_analyzed_experiments)
 
     fixations_fig, _ = return_bar_graph(
         [str(Eyesight.GOOD), str(Eyesight.BAD)],
@@ -200,7 +215,47 @@ def create_graphs_of_good_vs_bad_eyesight_fixation_data(
         "Average Fixation Duration [ms]"
     )
 
-    return fixations_fig, duration_fig
+    single_experiments_num_fixations, _ = create_scattered_graph(
+        {
+            str(Eyesight.GOOD): [
+                ScreenLocation(int(experiment_real_id), number_of_blinks)
+                for experiment_real_id, number_of_blinks in good_real_id_to_num_fixations.items()
+            ],
+            str(Eyesight.BAD): [
+                ScreenLocation(int(experiment_real_id), number_of_blinks)
+                for experiment_real_id, number_of_blinks in bad_real_id_to_num_fixations.items()
+            ]
+        },
+        {
+            str(Eyesight.GOOD): GREEN,
+            str(Eyesight.BAD): RED
+        },
+        "Experiment",
+        "Number of fixations",
+        "Number of fixations per Experiment",
+    )
+
+    single_experiments_duration_mean, _ = create_scattered_graph(
+        {
+            str(Eyesight.GOOD): [
+                ScreenLocation(int(experiment_real_id), number_of_blinks)
+                for experiment_real_id, number_of_blinks in good_real_id_to_duration_mean.items()
+            ],
+            str(Eyesight.BAD): [
+                ScreenLocation(int(experiment_real_id), number_of_blinks)
+                for experiment_real_id, number_of_blinks in bad_real_id_to_duration_mean.items()
+            ]
+        },
+        {
+            str(Eyesight.GOOD): GREEN,
+            str(Eyesight.BAD): RED
+        },
+        "Experiment",
+        "Number of fixations",
+        "Number of fixations per Experiment",
+    )
+
+    return fixations_fig, duration_fig, single_experiments_num_fixations, single_experiments_duration_mean
 
 
 def create_fixations_count_and_duration_k_means_graph(
@@ -352,7 +407,7 @@ def get_fixations_number_graphs(good_analyzed_experiments: AnalyzedExperiments,
         },
         "Time",
         "Fixations (Average)",
-        "Average Number of Fixations (Excluding data Beyond 2 Standard Deviations)",
+        "Average Number of Fixations\n(Excluding data Beyond 2 Standard Deviations)",
         GraphType.Line,
         [str(Eyesight.GOOD), str(Eyesight.BAD)]
     )
@@ -368,7 +423,7 @@ def get_fixations_number_graphs(good_analyzed_experiments: AnalyzedExperiments,
         },
         "Time",
         "Fixations Count Standard Decision",
-        "Fixations Count Standard Deviation (Excluding data Beyond 2 Standard Deviations)",
+        "Fixations Count Standard Deviation\n(Excluding data Beyond 2 Standard Deviations)",
         GraphType.Line,
         ["Good Eyesight Standard deviation", "Bad Eyesight Standard deviation"]
     )
