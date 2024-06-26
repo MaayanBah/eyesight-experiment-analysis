@@ -32,7 +32,9 @@ def get_the_analyzed_experiments_data(
 def create_graphs(good_analyzed_experiments: AnalyzedExperiments,
                   bad_analyzed_experiments: AnalyzedExperiments) -> list[plt.figure]:
     (num_of_fixations_fig,
-     fixation_duration_fig) = create_graphs_of_good_vs_bad_eyesight_fixation_data(
+     fixation_duration_fig,
+     single_experiments_num_fixations,
+     single_experiments_duration_mean) = create_graphs_of_good_vs_bad_eyesight_fixation_data(
         good_analyzed_experiments, bad_analyzed_experiments
     )
 
@@ -60,6 +62,7 @@ def create_graphs(good_analyzed_experiments: AnalyzedExperiments,
 
     return [num_of_fixations_fig_sorted_by_time, fig_fixation_count_stdev,
             num_of_fixations_fig, fixation_duration_fig,
+            single_experiments_num_fixations, single_experiments_duration_mean,
             fixations_count_and_duration_divided_to_good_bad_graph,
             fixations_count_and_duration_k_means_graph,
             mean_num_of_blinks_fig, mean_blinks_duration_fig, single_experiments_num_of_blinks_fig,
@@ -67,8 +70,6 @@ def create_graphs(good_analyzed_experiments: AnalyzedExperiments,
 
 
 def main():
-    # todo change df names to const names
-
     # let the users choose their preferred input method and use it
     input_one_by_one: bool = show_yes_no_dialog("Do you want to insert the experiments one by one?")
     experiments_input: list[ExperimentInput] = get_user_input(one_by_one=input_one_by_one)
