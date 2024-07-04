@@ -86,7 +86,8 @@ def create_time_series_scattered_or_line_graph_sorted_by_time(group_name_to_loca
         try_handles = [item for sublist in try_handles for item in sublist]
 
     # handles, labels = ax.get_legend_handles_labels()
-    ax.legend(handles=try_handles, labels=try_labels)
+    if legend_group_names:
+        ax.legend(handles=try_handles, labels=try_labels)
 
     return fig, ax
 
@@ -96,7 +97,8 @@ def create_scattered_graph(group_name_to_locations: dict[str, list[ScreenLocatio
                            x_label: str,
                            y_label: str,
                            title: str,
-                           dot_size: int = 20) -> tuple[plt.figure, any]:
+                           dot_size: int = 20,
+                           create_legend = True) -> tuple[plt.figure, any]:
     """
     :param dot_size:
     :param group_name_to_locations: A dictionary from group name to a list of x, y indexes tuple.
@@ -119,7 +121,8 @@ def create_scattered_graph(group_name_to_locations: dict[str, list[ScreenLocatio
         ax.set_ylabel(y_label)
         ax.set_title(title)
 
-    ax.legend()
+    if create_legend:
+        ax.legend()
 
     return fig, ax
 
@@ -608,7 +611,7 @@ def get_x_Y_coordinates_through_time_graphs(good_analyzed_experiments: AnalyzedE
         },
         "Time",
         "x value",
-        "x-axis values (gaze)",
+        "x-axis values (gaze)\n(Excluding data Beyond 2 Standard Deviations)",
         GraphType.Line,
         ["Good Eyesight average", "Bad Eyesight average"]
     )
@@ -628,7 +631,7 @@ def get_x_Y_coordinates_through_time_graphs(good_analyzed_experiments: AnalyzedE
         },
         "Time",
         "y value",
-        "y-axis values (gaze)",
+        "y-axis values (gaze)\n(Excluding data Beyond 2 Standard Deviations)",
         GraphType.Line,
         ["Good Eyesight average", "Bad Eyesight average"]
     )
