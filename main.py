@@ -53,7 +53,10 @@ def create_graphs(good_analyzed_experiments: AnalyzedExperiments,
         good_analyzed_experiments, bad_analyzed_experiments
     )
 
-    mean_num_of_blinks_fig, mean_blinks_duration_fig, single_experiments_num_of_blinks_fig = get_blink_graphs(
+    (mean_num_of_blinks_fig,
+     mean_blinks_duration_fig,
+     single_experiments_num_of_blinks_fig,
+     num_of_blinks_differences) = get_blink_graphs(
         good_analyzed_experiments, bad_analyzed_experiments
     )
 
@@ -74,6 +77,7 @@ def create_graphs(good_analyzed_experiments: AnalyzedExperiments,
             fixations_count_and_duration_k_means_graph,
             mean_num_of_blinks_fig, mean_blinks_duration_fig,
             single_experiments_num_of_blinks_fig,
+            num_of_blinks_differences,
             variance_fig,
             variance_mean_fig,
             x_coordinates_through_time_fig,

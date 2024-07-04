@@ -499,6 +499,11 @@ def get_blink_graphs(good_analyzed_experiments: AnalyzedExperiments,
         bad_analyzed_experiments
     )
 
+    num_blink_differences: dict[int: int] = {
+        experiment_real_id: good_num_duration - bad_experiments_single_experiments_num_blinks[experiment_real_id]
+        for experiment_real_id, good_num_duration in good_experiments_single_experiments_num_blinks.items()
+    }
+
     mean_num_of_blinks_fig, _ = return_bar_graph([str(Eyesight.GOOD), str(Eyesight.BAD)],
                                                  [good_num_of_blink_mean, bad_num_of_blink_mean],
                                                  "Eyesight",
@@ -531,7 +536,23 @@ def get_blink_graphs(good_analyzed_experiments: AnalyzedExperiments,
         "Number of Blinks per Experiment",
     )
 
-    return mean_num_of_blinks_fig, mean_duration_fig, single_experiments_num_of_blinks_fig
+    num_of_blinks_differences, _ = create_scattered_graph(
+        {
+            "Differences per experiment": [
+                ScreenLocation(int(experiment_real_id), num_blinks_differences)
+                for experiment_real_id,num_blinks_differences in num_blink_differences.items()
+            ]
+        },
+        {
+            "Differences per experiment": LIGHT_BLUE
+        },
+        "Experiment",
+        "Number of blinks difference",
+        "Number of Blinks Difference per Experiment",
+    )
+
+
+    return mean_num_of_blinks_fig, mean_duration_fig, single_experiments_num_of_blinks_fig, num_of_blinks_differences
 
 
 def get_x_Y_coordinates_through_time_graphs(good_analyzed_experiments: AnalyzedExperiments,
