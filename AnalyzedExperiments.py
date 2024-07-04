@@ -70,7 +70,7 @@ def limit_standard_deviation(values: list[int | float],
     :return: A list of values that do not exceed the specified number of standard deviations from the mean, the
     standard_deviation and mean
     """
-    if not values:
+    if len(values) < 2:
         return values
 
     mean = statistics.mean(values)
@@ -313,9 +313,8 @@ class AnalyzedExperiments:
 
         return average_screen_locations_sorted_by_time
 
-    @property
     @lru_cache(maxsize=3)
-    def average_fixation_locations_sorted_by_time(self):
+    def average_fixation_locations_sorted_by_time(self, max_deviation: float | None = None):
         average_fixation_locations_sorted_by_time: list[ScreenLocation] = [
             average_screen_location(
                 {
@@ -324,7 +323,8 @@ class AnalyzedExperiments:
                     for screen_location in analyzed_experiment.fixation_locations_sorted_by_time[
                     fixation_time_to_index(period_start_time, self.__parameters)
                 ]
-                }
+                },
+                max_deviation=max_deviation
             )
             for period_start_time in range(self.__parameters.fixation_start_time,
                                            self.__parameters.fixation_end_time,
@@ -376,7 +376,7 @@ class AnalyzedExperiments:
                 screen_location_variance(screen_locations, average_screen_location_)
                 for screen_locations, average_screen_location_ in zip(
                     self.__analyzed_experiments[experiment.id].fixation_locations_sorted_by_time,
-                    self.average_fixation_locations_sorted_by_time
+                    self.average_fixation_locations_sorted_by_time()
                 )
             ]
             for experiment in self.__experiments

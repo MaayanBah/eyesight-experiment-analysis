@@ -587,17 +587,25 @@ def get_x_Y_coordinates_through_time_graphs(good_analyzed_experiments: AnalyzedE
         experiments_x = {}
         experiments_y = {}
         for experiment_id, analyzed_experiment in analyzed_experiments_group.analyzed_experiments.items():
-            indexes_x = [screen_location.x for screen_location in analyzed_experiment.average_fixation_locations]
-            indexes_y = [screen_location.y for screen_location in analyzed_experiment.average_fixation_locations]
+            indexes_x = [
+                screen_location.x if screen_location is not None else -2000
+                for screen_location in analyzed_experiment.average_fixation_locations
+            ]
+            indexes_y = [
+                screen_location.y if screen_location is not None else -2000
+                for screen_location in analyzed_experiment.average_fixation_locations
+            ]
             experiments_x[experiment_id] = indexes_x
             experiments_y[experiment_id] = indexes_y
 
         experiment_average_x: list[float] = [
-            index.x for index in analyzed_experiments_group.average_fixation_locations_sorted_by_time(MAX_DEVIATION)
+            index.x if index is not None else -2000
+            for index  in analyzed_experiments_group.average_fixation_locations_sorted_by_time(MAX_DEVIATION)
         ]
 
         experiment_average_y: list[float] = [
-            index.y for index in analyzed_experiments_group.average_fixation_locations_sorted_by_time(MAX_DEVIATION)
+            index.y if index is not None else -2000
+            for index in analyzed_experiments_group.average_fixation_locations_sorted_by_time(MAX_DEVIATION)
         ]
 
         experiments_id_to_color = {
