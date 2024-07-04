@@ -34,7 +34,9 @@ def create_graphs(good_analyzed_experiments: AnalyzedExperiments,
     (num_of_fixations_fig,
      fixation_duration_fig,
      single_experiments_num_fixations,
-     single_experiments_duration_mean) = create_graphs_of_good_vs_bad_eyesight_fixation_data(
+     fixation_differences_fig,
+     single_experiments_duration_mean,
+     duration_mean_differences_fig) = create_graphs_of_good_vs_bad_eyesight_fixation_data(
         good_analyzed_experiments, bad_analyzed_experiments
     )
 
@@ -60,13 +62,22 @@ def create_graphs(good_analyzed_experiments: AnalyzedExperiments,
         good_analyzed_experiments, bad_analyzed_experiments
     )
 
-    return [num_of_fixations_fig_sorted_by_time, fig_fixation_count_stdev,
-            num_of_fixations_fig, fixation_duration_fig,
-            single_experiments_num_fixations, single_experiments_duration_mean,
+    return [num_of_fixations_fig_sorted_by_time,
+            fig_fixation_count_stdev,
+            num_of_fixations_fig,
+            fixation_duration_fig,
+            single_experiments_num_fixations,
+            fixation_differences_fig,
+            single_experiments_duration_mean,
+            duration_mean_differences_fig,
             fixations_count_and_duration_divided_to_good_bad_graph,
             fixations_count_and_duration_k_means_graph,
-            mean_num_of_blinks_fig, mean_blinks_duration_fig, single_experiments_num_of_blinks_fig,
-            variance_fig, variance_mean_fig, x_coordinates_through_time_fig, y_coordinates_through_time_fig]
+            mean_num_of_blinks_fig, mean_blinks_duration_fig,
+            single_experiments_num_of_blinks_fig,
+            variance_fig,
+            variance_mean_fig,
+            x_coordinates_through_time_fig,
+            y_coordinates_through_time_fig]
 
 
 def main():

@@ -8,7 +8,7 @@ from itertools import zip_longest
 from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
 from experiment_types import Eyesight, ScreenLocation
-from configurations import MAX_DEVIATION, RED, DARK_RED, GREEN, DARK_GREEN, BLUE, LIGHT_GREY
+from configurations import MAX_DEVIATION, RED, DARK_RED, GREEN, DARK_GREEN, BLUE, LIGHT_GREY, LIGHT_BLUE
 
 
 class GraphType(Enum):
@@ -199,6 +199,16 @@ def create_graphs_of_good_vs_bad_eyesight_fixation_data(
      bad_num_of_fixation_mean,
      bad_duration_mean) = get_data_for_graphs(bad_analyzed_experiments)
 
+    fixation_differences = {
+        experiment_real_id: number_of_good_fixations - bad_real_id_to_num_fixations[experiment_real_id]
+        for experiment_real_id, number_of_good_fixations in good_real_id_to_num_fixations.items()
+    }
+
+    duration_mean_differences = {
+        experiment_real_id: good_duration_mean - bad_real_id_to_duration_mean[experiment_real_id]
+        for experiment_real_id, good_duration_mean in good_real_id_to_duration_mean.items()
+    }
+
     fixations_fig, _ = return_bar_graph(
         [str(Eyesight.GOOD), str(Eyesight.BAD)],
         [good_num_of_fixation_mean, bad_num_of_fixation_mean],
@@ -218,12 +228,12 @@ def create_graphs_of_good_vs_bad_eyesight_fixation_data(
     single_experiments_num_fixations, _ = create_scattered_graph(
         {
             str(Eyesight.GOOD): [
-                ScreenLocation(int(experiment_real_id), number_of_blinks)
-                for experiment_real_id, number_of_blinks in good_real_id_to_num_fixations.items()
+                ScreenLocation(int(experiment_real_id), number_of_fixations)
+                for experiment_real_id, number_of_fixations in good_real_id_to_num_fixations.items()
             ],
             str(Eyesight.BAD): [
-                ScreenLocation(int(experiment_real_id), number_of_blinks)
-                for experiment_real_id, number_of_blinks in bad_real_id_to_num_fixations.items()
+                ScreenLocation(int(experiment_real_id), number_of_fixations)
+                for experiment_real_id, number_of_fixations in bad_real_id_to_num_fixations.items()
             ]
         },
         {
@@ -233,17 +243,32 @@ def create_graphs_of_good_vs_bad_eyesight_fixation_data(
         "Experiment",
         "Number of fixations",
         "Number of fixations per Experiment",
+    )
+
+    fixation_differences_fig, _ = create_scattered_graph(
+        {
+            "Differences per experiment": [
+                ScreenLocation(int(experiment_real_id), fixation_differences)
+                for experiment_real_id, fixation_differences in fixation_differences.items()
+            ]
+        },
+        {
+            "Differences per experiment": LIGHT_BLUE
+        },
+        "Experiment",
+        "Fixations difference",
+        "Fixations difference per Experiment",
     )
 
     single_experiments_duration_mean, _ = create_scattered_graph(
         {
             str(Eyesight.GOOD): [
-                ScreenLocation(int(experiment_real_id), number_of_blinks)
-                for experiment_real_id, number_of_blinks in good_real_id_to_duration_mean.items()
+                ScreenLocation(int(experiment_real_id), duration_mean)
+                for experiment_real_id, duration_mean in good_real_id_to_duration_mean.items()
             ],
             str(Eyesight.BAD): [
-                ScreenLocation(int(experiment_real_id), number_of_blinks)
-                for experiment_real_id, number_of_blinks in bad_real_id_to_duration_mean.items()
+                ScreenLocation(int(experiment_real_id), duration_mean)
+                for experiment_real_id, duration_mean in bad_real_id_to_duration_mean.items()
             ]
         },
         {
@@ -251,11 +276,31 @@ def create_graphs_of_good_vs_bad_eyesight_fixation_data(
             str(Eyesight.BAD): RED
         },
         "Experiment",
-        "Number of fixations",
-        "Number of fixations per Experiment",
+        "Duration mean",
+        "Duration mean per Experiment",
     )
 
-    return fixations_fig, duration_fig, single_experiments_num_fixations, single_experiments_duration_mean
+    duration_mean_differences_fig, _ = create_scattered_graph(
+        {
+            "Differences per experiment": [
+                ScreenLocation(int(experiment_real_id), duration_mean_differences)
+                for experiment_real_id, duration_mean_differences in duration_mean_differences.items()
+            ]
+        },
+        {
+            "Differences per experiment": LIGHT_BLUE
+        },
+        "Experiment",
+        "Duration mean difference",
+        "Duration Mean Difference per Experiment",
+    )
+
+    return (fixations_fig,
+            duration_fig,
+            single_experiments_num_fixations,
+            fixation_differences_fig,
+            single_experiments_duration_mean,
+            duration_mean_differences_fig)
 
 
 def create_fixations_count_and_duration_k_means_graph(
