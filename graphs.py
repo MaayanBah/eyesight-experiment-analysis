@@ -40,8 +40,10 @@ def create_time_series_scattered_or_line_graph_sorted_by_time(group_name_to_loca
                                                               legend_group_names: list[str],
                                                               dot_size: int = 20,
                                                               line_width: float = 1,
-                                                              ) -> tuple[plt.figure, any]:
+                                                              add_fill_between: bool = False,
+                                                              figsize=(20, 6)) -> tuple[plt.figure, any]:
     """
+    :param add_fill_between:
     :param legend_group_names:
     :param line_width:
     :param dot_size: The dots size.
@@ -55,27 +57,36 @@ def create_time_series_scattered_or_line_graph_sorted_by_time(group_name_to_loca
     :param graph_type:
     :return: The new figure and the ax_dict (for more info look at matplotlib.subplots documentation)
     """
-    fig, ax = plt.subplots()
+    fig, ax = plt.subplots(figsize=figsize)
     legend_group_names_to_plots = {}
     try_handles = []
     try_labels = []
     for group_name, locations in group_name_to_locations.items():
         locations = [np.nan if loc is None else loc for loc in locations]
-
+        x_values = [x for x in range(1, len(locations) + 1)]
         # Create a scatter plot for each group
         if graph_type == GraphType.Scattered:
             cur_plot: plt.figure = ax.scatter(
-                [x for x in range(1, len(locations) + 1)],
+                x_values,
                 locations, color=group_name_to_color[group_name],
                 label=group_name, s=dot_size
             )
         else:
             cur_plot: plt.figure = ax.plot(
-                [x for x in range(1, len(locations) + 1)],
+                x_values,
                 locations, color=group_name_to_color[group_name],
                 label=group_name,
                 linewidth=line_width
             )
+            if add_fill_between:
+                std_dev = np.nanstd(locations)  # Calculate standard deviation, ignoring NaNs
+                count = np.sum(~np.isnan(locations))  # Count of non-NaN values
+                sem = std_dev / np.sqrt(count)  # Calculate SEM
+                lower_bound = np.array(locations) - sem
+                upper_bound = np.array(locations) + sem
+                ax.fill_between(x_values, lower_bound, upper_bound,
+                                color=group_name_to_color[group_name],
+                                alpha=0.3)
         if group_name in legend_group_names:
             try_handles.append(cur_plot)
             try_labels.append(group_name)
@@ -461,7 +472,8 @@ def get_fixations_number_graphs(good_analyzed_experiments: AnalyzedExperiments,
         "Fixations (Average)",
         "Average Number of Fixations\n(Excluding data Beyond 2 Standard Deviations)",
         GraphType.Line,
-        [str(Eyesight.GOOD), str(Eyesight.BAD)]
+        [str(Eyesight.GOOD), str(Eyesight.BAD)],
+        add_fill_between=True
     )
 
     fig_fixation_count_stdev, _ = create_time_series_scattered_or_line_graph_sorted_by_time(
@@ -648,7 +660,8 @@ def get_x_y_coordinates_through_time_graphs(good_analyzed_experiments: AnalyzedE
         "x value",
         "x-axis values (gaze)\n(Excluding data Beyond 2 Standard Deviations)",
         GraphType.Line,
-        ["Good Eyesight average", "Bad Eyesight average"]
+        ["Good Eyesight average", "Bad Eyesight average"],
+        add_fill_between=True
     )
 
     y_values_gaze_fig, _ = create_time_series_scattered_or_line_graph_sorted_by_time(
@@ -668,7 +681,8 @@ def get_x_y_coordinates_through_time_graphs(good_analyzed_experiments: AnalyzedE
         "y value",
         "y-axis values (gaze)\n(Excluding data Beyond 2 Standard Deviations)",
         GraphType.Line,
-        ["Good Eyesight average", "Bad Eyesight average"]
+        ["Good Eyesight average", "Bad Eyesight average"],
+        add_fill_between=True
     )
 
     (good_experiments_x_fixation,
@@ -699,7 +713,8 @@ def get_x_y_coordinates_through_time_graphs(good_analyzed_experiments: AnalyzedE
         "x value",
         "x-axis values (fixations)\n(Excluding data Beyond 2 Standard Deviations)",
         GraphType.Line,
-        ["Good Eyesight average", "Bad Eyesight average"]
+        ["Good Eyesight average", "Bad Eyesight average"],
+        add_fill_between=True
     )
 
     y_values_fixations_fig, _ = create_time_series_scattered_or_line_graph_sorted_by_time(
@@ -719,7 +734,8 @@ def get_x_y_coordinates_through_time_graphs(good_analyzed_experiments: AnalyzedE
         "y value",
         "y-axis values (fixations)\n(Excluding data Beyond 2 Standard Deviations)",
         GraphType.Line,
-        ["Good Eyesight average", "Bad Eyesight average"]
+        ["Good Eyesight average", "Bad Eyesight average"],
+        add_fill_between=True
     )
 
     return x_values_gaze_fix, y_values_gaze_fig, x_values_fixations_fig, y_values_fixations_fig
