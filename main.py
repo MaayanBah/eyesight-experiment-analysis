@@ -60,13 +60,18 @@ def create_graphs(good_analyzed_experiments: AnalyzedExperiments,
         good_analyzed_experiments, bad_analyzed_experiments
     )
 
-    (x_coordinates_through_time_fig,
-     y_coordinates_through_time_fig) = get_x_Y_coordinates_through_time_graphs(
+    (x_coordinates_through_time_gaze_fig,
+     y_coordinates_through_time_gaze_fig,
+     x_coordinates_through_time_fixations_fig,
+     y_coordinates_through_time_fixations_fig,
+     ) = get_x_Y_coordinates_through_time_graphs(
         good_analyzed_experiments, bad_analyzed_experiments
     )
 
     return [num_of_fixations_fig_sorted_by_time,
             fig_fixation_count_stdev,
+            x_coordinates_through_time_fixations_fig,
+            y_coordinates_through_time_fixations_fig,
             num_of_fixations_fig,
             fixation_duration_fig,
             single_experiments_num_fixations,
@@ -80,8 +85,8 @@ def create_graphs(good_analyzed_experiments: AnalyzedExperiments,
             num_of_blinks_differences,
             variance_fig,
             variance_mean_fig,
-            x_coordinates_through_time_fig,
-            y_coordinates_through_time_fig]
+            x_coordinates_through_time_gaze_fig,
+            y_coordinates_through_time_gaze_fig]
 
 
 def main():
