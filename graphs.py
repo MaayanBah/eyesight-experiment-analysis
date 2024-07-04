@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import statistics
 from enum import Enum
+
+import numpy as np
 from matplotlib.backends.backend_pdf import PdfPages
 from AnalyzedExperiments import AnalyzedExperiments, limit_standard_deviation
 from itertools import zip_longest
@@ -58,6 +60,8 @@ def create_time_series_scattered_or_line_graph_sorted_by_time(group_name_to_loca
     try_handles = []
     try_labels = []
     for group_name, locations in group_name_to_locations.items():
+        locations = [np.nan if loc is None else loc for loc in locations]
+
         # Create a scatter plot for each group
         if graph_type == GraphType.Scattered:
             cur_plot: plt.figure = ax.scatter(
@@ -557,7 +561,7 @@ def get_blink_graphs(good_analyzed_experiments: AnalyzedExperiments,
     return mean_num_of_blinks_fig, mean_duration_fig, single_experiments_num_of_blinks_fig, num_of_blinks_differences
 
 
-def get_x_Y_coordinates_through_time_graphs(good_analyzed_experiments: AnalyzedExperiments,
+def get_x_y_coordinates_through_time_graphs(good_analyzed_experiments: AnalyzedExperiments,
                                             bad_analyzed_experiments: AnalyzedExperiments):
     def create_gaze_y_or_x_graph_data(analyzed_experiments_group: AnalyzedExperiments, color: str):
         experiments_x = {}
@@ -588,23 +592,23 @@ def get_x_Y_coordinates_through_time_graphs(good_analyzed_experiments: AnalyzedE
         experiments_y = {}
         for experiment_id, analyzed_experiment in analyzed_experiments_group.analyzed_experiments.items():
             indexes_x = [
-                screen_location.x if screen_location is not None else -2000
+                screen_location.x if screen_location is not None else None
                 for screen_location in analyzed_experiment.average_fixation_locations
             ]
             indexes_y = [
-                screen_location.y if screen_location is not None else -2000
+                screen_location.y if screen_location is not None else None
                 for screen_location in analyzed_experiment.average_fixation_locations
             ]
             experiments_x[experiment_id] = indexes_x
             experiments_y[experiment_id] = indexes_y
 
         experiment_average_x: list[float] = [
-            index.x if index is not None else -2000
-            for index  in analyzed_experiments_group.average_fixation_locations_sorted_by_time(MAX_DEVIATION)
+            index.x if index is not None else None
+            for index in analyzed_experiments_group.average_fixation_locations_sorted_by_time(MAX_DEVIATION)
         ]
 
         experiment_average_y: list[float] = [
-            index.y if index is not None else -2000
+            index.y if index is not None else None
             for index in analyzed_experiments_group.average_fixation_locations_sorted_by_time(MAX_DEVIATION)
         ]
 

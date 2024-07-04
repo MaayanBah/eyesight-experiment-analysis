@@ -176,8 +176,9 @@ class AnalyzedExperiment:
                 ]
 
             locations_in_time_period = set(fixations_in_time_period.apply(
-                lambda row: ScreenLocation(row["fixation position transf y[px]"],
-                                           row["fixation position transf x[px]"]),
+                lambda row: ScreenLocation(row["fixation position transf x[px]"],
+                                           row["fixation position transf y[px]"],
+                                           ),
                 axis=1)
             )
 

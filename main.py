@@ -5,7 +5,7 @@ from graphs import (create_graphs_of_good_vs_bad_eyesight_fixation_data,
                     matplotlib_figures_to_pdf, get_gaze_variance_graphs, get_blink_graphs,
                     get_fixations_number_graphs,
                     create_fixations_count_and_duration_k_means_graph,
-                    get_x_Y_coordinates_through_time_graphs)
+                    get_x_y_coordinates_through_time_graphs)
 from AnalyzedExperiments import (AnalyzedExperiments, AnalyzedExperimentsParameters,
                                  split_experiments_by_eyesight, get_mapped_gaze_start_time_to_end_time,
                                  get_raw_data_fixation_start_time_to_end_time)
@@ -64,7 +64,7 @@ def create_graphs(good_analyzed_experiments: AnalyzedExperiments,
      y_coordinates_through_time_gaze_fig,
      x_coordinates_through_time_fixations_fig,
      y_coordinates_through_time_fixations_fig,
-     ) = get_x_Y_coordinates_through_time_graphs(
+     ) = get_x_y_coordinates_through_time_graphs(
         good_analyzed_experiments, bad_analyzed_experiments
     )
 
