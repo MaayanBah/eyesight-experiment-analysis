@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import math
 import statistics
 from enum import Enum
 
@@ -41,8 +42,11 @@ def create_time_series_scattered_or_line_graph_sorted_by_time(group_name_to_loca
                                                               dot_size: int = 20,
                                                               line_width: float = 1,
                                                               add_fill_between: bool = False,
-                                                              figsize=(20, 6)) -> tuple[plt.figure, any]:
+                                                              figsize=(20, 6),
+                                                              fill_between_values:dict[str, list[float]] = None) -> tuple[plt.figure, any]:
     """
+    :param fill_between_values:
+    :param figsize:
     :param add_fill_between:
     :param legend_group_names:
     :param line_width:
@@ -79,14 +83,15 @@ def create_time_series_scattered_or_line_graph_sorted_by_time(group_name_to_loca
                 linewidth=line_width
             )
             if add_fill_between:
-                std_dev = np.nanstd(locations)  # Calculate standard deviation, ignoring NaNs
-                count = np.sum(~np.isnan(locations))  # Count of non-NaN values
-                sem = std_dev / np.sqrt(count)  # Calculate SEM
-                lower_bound = np.array(locations) - sem
-                upper_bound = np.array(locations) + sem
-                ax.fill_between(x_values, lower_bound, upper_bound,
-                                color=group_name_to_color[group_name],
-                                alpha=0.3)
+                lower_bound = locations - np.array(fill_between_values[group_name])
+                upper_bound = locations + np.array(fill_between_values[group_name])
+                ax.fill_between(
+                    x_values,
+                    lower_bound,
+                    upper_bound,
+                    color=group_name_to_color[group_name],
+                    alpha=0.3
+                )
         if group_name in legend_group_names:
             try_handles.append(cur_plot)
             try_labels.append(group_name)
@@ -421,7 +426,8 @@ def get_gaze_variance_graphs(good_analyzed_experiments: AnalyzedExperiments,
 
 def get_fixations_number_graphs(good_analyzed_experiments: AnalyzedExperiments,
                                 bad_analyzed_experiments: AnalyzedExperiments) -> tuple[plt.figure, plt.figure]:
-    def get_group_data_for_graphs(analyzed_experiments: AnalyzedExperiments) -> tuple[list[int | float], list[int | float]]:
+    def get_group_data_for_graphs(
+            analyzed_experiments: AnalyzedExperiments) -> tuple[list[int | float], list[int | float], list[float]]:
         eyesight_fixation_count_sorted_by_time: list[list[int]] = (
             analyzed_experiments.fixation_count_sorted_by_time
         )
@@ -433,11 +439,17 @@ def get_fixations_number_graphs(good_analyzed_experiments: AnalyzedExperiments,
             statistics.stdev(x) for x in eyesight_fixation_count_sorted_by_time_limited_stdev
         ]
 
+        eyesight_sem: list[float] = [
+            std / math.sqrt(len(x)) for std, x in
+            zip(eyesight_stdev, eyesight_fixation_count_sorted_by_time_limited_stdev)
+        ]
+
         eyesight_fixation_average_sorted_by_time = [
             sum(fixation_count) / len(fixation_count) for fixation_count
             in eyesight_fixation_count_sorted_by_time_limited_stdev
         ]
         return (eyesight_stdev,
+                eyesight_sem,
                 eyesight_fixation_average_sorted_by_time)
 
     """
@@ -451,10 +463,12 @@ def get_fixations_number_graphs(good_analyzed_experiments: AnalyzedExperiments,
 
     """
     (good_eyesight_stdev,
+     good_eyesight_sem,
      good_eyesight_fixation_average_sorted_by_time) = get_group_data_for_graphs(
         good_analyzed_experiments
     )
     (bad_eyesight_stdev,
+     bad_eyesight_sem,
      bad_eyesight_fixation_average_sorted_by_time) = get_group_data_for_graphs(
         bad_analyzed_experiments
     )
@@ -473,7 +487,11 @@ def get_fixations_number_graphs(good_analyzed_experiments: AnalyzedExperiments,
         "Average Number of Fixations\n(Excluding data Beyond 2 Standard Deviations)",
         GraphType.Line,
         [str(Eyesight.GOOD), str(Eyesight.BAD)],
-        add_fill_between=True
+        add_fill_between=True,
+        fill_between_values={
+            str(Eyesight.GOOD): good_eyesight_sem,
+            str(Eyesight.BAD): bad_eyesight_sem
+        }
     )
 
     fig_fixation_count_stdev, _ = create_time_series_scattered_or_line_graph_sorted_by_time(
@@ -660,8 +678,7 @@ def get_x_y_coordinates_through_time_graphs(good_analyzed_experiments: AnalyzedE
         "x value",
         "x-axis values (gaze)\n(Excluding data Beyond 2 Standard Deviations)",
         GraphType.Line,
-        ["Good Eyesight average", "Bad Eyesight average"],
-        add_fill_between=True
+        ["Good Eyesight average", "Bad Eyesight average"]
     )
 
     y_values_gaze_fig, _ = create_time_series_scattered_or_line_graph_sorted_by_time(
@@ -681,8 +698,7 @@ def get_x_y_coordinates_through_time_graphs(good_analyzed_experiments: AnalyzedE
         "y value",
         "y-axis values (gaze)\n(Excluding data Beyond 2 Standard Deviations)",
         GraphType.Line,
-        ["Good Eyesight average", "Bad Eyesight average"],
-        add_fill_between=True
+        ["Good Eyesight average", "Bad Eyesight average"]
     )
 
     (good_experiments_x_fixation,
@@ -713,8 +729,7 @@ def get_x_y_coordinates_through_time_graphs(good_analyzed_experiments: AnalyzedE
         "x value",
         "x-axis values (fixations)\n(Excluding data Beyond 2 Standard Deviations)",
         GraphType.Line,
-        ["Good Eyesight average", "Bad Eyesight average"],
-        add_fill_between=True
+        ["Good Eyesight average", "Bad Eyesight average"]
     )
 
     y_values_fixations_fig, _ = create_time_series_scattered_or_line_graph_sorted_by_time(
@@ -734,8 +749,7 @@ def get_x_y_coordinates_through_time_graphs(good_analyzed_experiments: AnalyzedE
         "y value",
         "y-axis values (fixations)\n(Excluding data Beyond 2 Standard Deviations)",
         GraphType.Line,
-        ["Good Eyesight average", "Bad Eyesight average"],
-        add_fill_between=True
+        ["Good Eyesight average", "Bad Eyesight average"]
     )
 
     return x_values_gaze_fix, y_values_gaze_fig, x_values_fixations_fig, y_values_fixations_fig
