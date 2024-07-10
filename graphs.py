@@ -636,7 +636,9 @@ def get_x_y_coordinates_through_time_graphs(good_analyzed_experiments: AnalyzedE
             index.y for index in analyzed_experiments_group.average_screen_locations_sorted_by_time(MAX_DEVIATION)
         ]
 
-        (sem_gaze_locations_sorted_by_time_x,
+        (stdev_gaze_locations_sorted_by_time_x,
+         sem_gaze_locations_sorted_by_time_x,
+         stdev_gaze_locations_sorted_by_time_y,
          sem_gaze_locations_sorted_by_time_y) = (
             analyzed_experiments_group.sem_gaze_locations_sorted_by_time(MAX_DEVIATION)
         )
@@ -646,8 +648,15 @@ def get_x_y_coordinates_through_time_graphs(good_analyzed_experiments: AnalyzedE
             in analyzed_experiments_group.experiment_gaze_variances_sorted_by_time.keys()
         }
 
-        return (experiments_x, experiments_y, experiment_average_x, experiment_average_y,
-                experiments_id_to_color, sem_gaze_locations_sorted_by_time_x, sem_gaze_locations_sorted_by_time_y)
+        return (experiments_x,
+                experiments_y,
+                experiment_average_x,
+                experiment_average_y,
+                experiments_id_to_color,
+                stdev_gaze_locations_sorted_by_time_x,
+                sem_gaze_locations_sorted_by_time_x,
+                stdev_gaze_locations_sorted_by_time_y,
+                sem_gaze_locations_sorted_by_time_y)
 
     def create_fixations_y_or_x_graph_data(analyzed_experiments_group: AnalyzedExperiments, color: str):
         experiments_x = {}
@@ -700,14 +709,18 @@ def get_x_y_coordinates_through_time_graphs(good_analyzed_experiments: AnalyzedE
      good_experiment_average_x_gaze,
      good_experiment_average_y_gaze,
      good_experiments_id_to_color_gaze,
+     good_gaze_x_stdev_sorted_by_time,
      good_gaze_x_sem_sorted_by_time,
+     good_gaze_y_stdev_sorted_by_time,
      good_gaze_y_sem_sorted_by_time) = create_gaze_y_or_x_graph_data(good_analyzed_experiments, LIGHT_GREY)
     (bad_experiments_x_gaze,
      bad_experiments_y_gaze,
      bad_experiment_average_x_gaze,
      bad_experiment_average_y_gaze,
      bad_experiments_id_to_color_gaze,
+     bad_gaze_x_stdev_sorted_by_time,
      bad_gaze_x_sem_sorted_by_time,
+     bad_gaze_y_stdev_sorted_by_time,
      bad_gaze_y_sem_sorted_by_time) = create_gaze_y_or_x_graph_data(bad_analyzed_experiments, LIGHT_GREY)
 
     x_values_gaze_fix, _ = create_time_series_scattered_or_line_graph_sorted_by_time(
@@ -730,8 +743,8 @@ def get_x_y_coordinates_through_time_graphs(good_analyzed_experiments: AnalyzedE
         ["Good Eyesight average", "Bad Eyesight average"],
         add_fill_between=True,
         fill_between_values={
-            "Good Eyesight average": good_gaze_x_sem_sorted_by_time,
-            "Bad Eyesight average": bad_gaze_x_sem_sorted_by_time
+            "Good Eyesight average": good_gaze_x_stdev_sorted_by_time,
+            "Bad Eyesight average": bad_gaze_x_stdev_sorted_by_time
         }
     )
 
@@ -755,8 +768,8 @@ def get_x_y_coordinates_through_time_graphs(good_analyzed_experiments: AnalyzedE
         ["Good Eyesight average", "Bad Eyesight average"],
         add_fill_between=True,
         fill_between_values={
-            "Good Eyesight average": good_gaze_y_sem_sorted_by_time,
-            "Bad Eyesight average": bad_gaze_y_sem_sorted_by_time
+            "Good Eyesight average": good_gaze_y_stdev_sorted_by_time,
+            "Bad Eyesight average": bad_gaze_y_stdev_sorted_by_time
         }
     )
 

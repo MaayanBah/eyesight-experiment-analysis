@@ -317,7 +317,9 @@ class AnalyzedExperiments:
         return average_screen_locations_sorted_by_time
 
     def sem_gaze_locations_sorted_by_time(self, max_deviation: float | None = None):
+        stdev_gaze_locations_sorted_by_time_x = []
         sem_gaze_locations_sorted_by_time_x = []
+        stdev_gaze_locations_sorted_by_time_y = []
         sem_gaze_locations_sorted_by_time_y = []
 
         for period_start_time in range(self.__parameters.gaze_start_time,
@@ -343,19 +345,25 @@ class AnalyzedExperiments:
             if len(gaze_locations_x) > 1:
                 gaze_locations_filtered = limit_standard_deviation(gaze_locations_x, max_deviation)
                 deviation = statistics.stdev(gaze_locations_filtered)
+                stdev_gaze_locations_sorted_by_time_x.append(deviation)
                 sem_gaze_locations_sorted_by_time_x.append(deviation / math.sqrt(len(gaze_locations_x)))
             else:
+                stdev_gaze_locations_sorted_by_time_x.append(0)
                 sem_gaze_locations_sorted_by_time_x.append(0)
 
             if len(gaze_locations_y) > 1:
                 gaze_locations_filtered = limit_standard_deviation(gaze_locations_y, max_deviation)
                 deviation = statistics.stdev(gaze_locations_filtered)
+                stdev_gaze_locations_sorted_by_time_y.append(deviation)
                 sem_gaze_locations_sorted_by_time_y.append(deviation / math.sqrt(len(gaze_locations_y)))
             else:
+                stdev_gaze_locations_sorted_by_time_y.append(0)
                 sem_gaze_locations_sorted_by_time_y.append(0)
 
-        return sem_gaze_locations_sorted_by_time_x, sem_gaze_locations_sorted_by_time_y
-
+        return (stdev_gaze_locations_sorted_by_time_x,
+                sem_gaze_locations_sorted_by_time_x,
+                stdev_gaze_locations_sorted_by_time_y,
+                sem_gaze_locations_sorted_by_time_y)
 
     @lru_cache(maxsize=3)
     def average_fixation_locations_sorted_by_time(self, max_deviation: float | None = None):
