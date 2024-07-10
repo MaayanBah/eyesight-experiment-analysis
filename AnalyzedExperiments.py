@@ -1,4 +1,7 @@
 from __future__ import annotations
+
+import math
+
 from configurations import MAX_DEVIATION
 import statistics
 from dataclasses import dataclass
@@ -314,6 +317,47 @@ class AnalyzedExperiments:
 
         return average_screen_locations_sorted_by_time
 
+    def sem_gaze_locations_sorted_by_time(self, max_deviation: float | None = None):
+        sem_gaze_locations_sorted_by_time_x = []
+        sem_gaze_locations_sorted_by_time_y = []
+
+        for period_start_time in range(self.__parameters.gaze_start_time,
+                                       self.__parameters.gaze_end_time,
+                                       self.__parameters.delta_time):
+
+            gaze_locations_x = [
+                screen_location.x
+                for analyzed_experiment in self.__analyzed_experiments.values()
+                for screen_location in analyzed_experiment.screen_locations_sorted_by_time[
+                    gaze_time_to_index(period_start_time, self.__parameters)
+                ]
+            ]
+
+            gaze_locations_y = [
+                screen_location.y
+                for analyzed_experiment in self.__analyzed_experiments.values()
+                for screen_location in analyzed_experiment.screen_locations_sorted_by_time[
+                    gaze_time_to_index(period_start_time, self.__parameters)
+                ]
+            ]
+
+            if len(gaze_locations_x) > 1:
+                gaze_locations_filtered = limit_standard_deviation(gaze_locations_x, max_deviation)
+                deviation = statistics.stdev(gaze_locations_filtered)
+                sem_gaze_locations_sorted_by_time_x.append(deviation / math.sqrt(len(gaze_locations_x)))
+            else:
+                sem_gaze_locations_sorted_by_time_x.append(0)
+
+            if len(gaze_locations_y) > 1:
+                gaze_locations_filtered = limit_standard_deviation(gaze_locations_y, max_deviation)
+                deviation = statistics.stdev(gaze_locations_filtered)
+                sem_gaze_locations_sorted_by_time_y.append(deviation / math.sqrt(len(gaze_locations_y)))
+            else:
+                sem_gaze_locations_sorted_by_time_y.append(0)
+
+        return sem_gaze_locations_sorted_by_time_x, sem_gaze_locations_sorted_by_time_y
+
+
     @lru_cache(maxsize=3)
     def average_fixation_locations_sorted_by_time(self, max_deviation: float | None = None):
         average_fixation_locations_sorted_by_time: list[ScreenLocation] = [
@@ -333,6 +377,46 @@ class AnalyzedExperiments:
         ]
 
         return average_fixation_locations_sorted_by_time
+
+    def sem_fixation_locations_sorted_by_time(self, max_deviation: float | None = None):
+        sem_fixation_locations_sorted_by_time_x = []
+        sem_fixation_locations_sorted_by_time_y = []
+
+        for period_start_time in range(self.__parameters.fixation_start_time,
+                                       self.__parameters.fixation_end_time,
+                                       self.__parameters.delta_time):
+
+            fixation_locations_x = [
+                screen_location.x
+                for analyzed_experiment in self.__analyzed_experiments.values()
+                for screen_location in analyzed_experiment.fixation_locations_sorted_by_time[
+                    fixation_time_to_index(period_start_time, self.__parameters)
+                ]
+            ]
+
+            fixation_locations_y = [
+                screen_location.y
+                for analyzed_experiment in self.__analyzed_experiments.values()
+                for screen_location in analyzed_experiment.fixation_locations_sorted_by_time[
+                    fixation_time_to_index(period_start_time, self.__parameters)
+                ]
+            ]
+
+            if len(fixation_locations_x) > 1:
+                fixation_locations_filtered = limit_standard_deviation(fixation_locations_x, max_deviation)
+                deviation = statistics.stdev(fixation_locations_filtered)
+                sem_fixation_locations_sorted_by_time_x.append(deviation / math.sqrt(len(fixation_locations_x)))
+            else:
+                sem_fixation_locations_sorted_by_time_x.append(0)
+
+            if len(fixation_locations_y) > 1:
+                fixation_locations_filtered = limit_standard_deviation(fixation_locations_y, max_deviation)
+                deviation = statistics.stdev(fixation_locations_filtered)
+                sem_fixation_locations_sorted_by_time_y.append(deviation / math.sqrt(len(fixation_locations_y)))
+            else:
+                sem_fixation_locations_sorted_by_time_y.append(0)
+
+        return sem_fixation_locations_sorted_by_time_x, sem_fixation_locations_sorted_by_time_y
 
     @property
     def fixation_count_sorted_by_time(self) -> list[list[int]]:
