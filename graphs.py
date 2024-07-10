@@ -19,13 +19,15 @@ class GraphType(Enum):
     Line = 2
 
 
-def return_bar_graph(categories: list[str],
+def create_bar_graph(categories: list[str],
                      values: list[float | int],
                      x_label: str,
                      y_label: str,
-                     graph_title: str, bar_width=0.4) -> tuple[plt.figure, any]:
+                     graph_title: str,
+                     y_errors: list[float | int] = None,
+                     bar_width=0.4) -> tuple[plt.figure, any]:
     fig, ax = plt.subplots()
-    ax.bar(categories, values, width=bar_width, align='center', color=BLUE)
+    ax.bar(categories, values, width=bar_width, align='center', color=BLUE, yerr=y_errors, capsize=5)
     ax.set_xlabel(x_label)
     ax.set_ylabel(y_label)
     ax.set_title(graph_title)
@@ -203,8 +205,11 @@ def create_graphs_of_good_vs_bad_eyesight_fixation_data(
             real_id_to_num_fixations[analyzed_experiment.experiment.experiment_real_id] = num_fixations
             real_id_to_duration_mean[analyzed_experiment.experiment.experiment_real_id] = duration_mean
         (num_of_fixation_mean,
-         duration_mean) = analyzed_experiments.get_mean_fixations_count_and_duration()
-        return real_id_to_num_fixations, real_id_to_duration_mean, num_of_fixation_mean, duration_mean
+         duration_mean,
+         fixations_sem,
+         duration_sem) = analyzed_experiments.get_mean_fixations_count_and_duration()
+        return (real_id_to_num_fixations, real_id_to_duration_mean, num_of_fixation_mean, duration_mean,
+                fixations_sem, duration_sem)
 
     """
     :param bad_analyzed_experiments: AnalyzedExperiments class of experiment of people with good eyesight.
@@ -215,12 +220,16 @@ def create_graphs_of_good_vs_bad_eyesight_fixation_data(
     (good_real_id_to_num_fixations,
      good_real_id_to_duration_mean,
      good_num_of_fixation_mean,
-     good_duration_mean) = get_data_for_graphs(good_analyzed_experiments)
+     good_duration_mean,
+     good_fixations_sem,
+     good_duration_sem) = get_data_for_graphs(good_analyzed_experiments)
 
     (bad_real_id_to_num_fixations,
      bad_real_id_to_duration_mean,
      bad_num_of_fixation_mean,
-     bad_duration_mean) = get_data_for_graphs(bad_analyzed_experiments)
+     bad_duration_mean,
+     bad_fixations_sem,
+     bad_duration_sem) = get_data_for_graphs(bad_analyzed_experiments)
 
     fixation_differences = {
         experiment_real_id: number_of_good_fixations - bad_real_id_to_num_fixations[experiment_real_id]
@@ -232,20 +241,22 @@ def create_graphs_of_good_vs_bad_eyesight_fixation_data(
         for experiment_real_id, good_duration_mean in good_real_id_to_duration_mean.items()
     }
 
-    fixations_fig, _ = return_bar_graph(
+    fixations_fig, _ = create_bar_graph(
         [str(Eyesight.GOOD), str(Eyesight.BAD)],
         [good_num_of_fixation_mean, bad_num_of_fixation_mean],
         "Eyesight",
         "Number of Fixations (Average)",
-        "Average Number of Fixations"
+        "Average Number of Fixations",
+        y_errors=[good_fixations_sem, bad_fixations_sem]
     )
 
-    duration_fig, _ = return_bar_graph(
+    duration_fig, _ = create_bar_graph(
         [str(Eyesight.GOOD), str(Eyesight.BAD)],
         [good_duration_mean, bad_duration_mean],
         "Eyesight",
         "Average Duration",
-        "Average Fixation Duration [ms]"
+        "Average Fixation Duration [ms]",
+        y_errors=[good_duration_sem, bad_duration_sem]
     )
 
     single_experiments_num_fixations, _ = create_scattered_graph(
@@ -516,7 +527,9 @@ def get_blink_graphs(good_analyzed_experiments: AnalyzedExperiments,
                      bad_analyzed_experiments: AnalyzedExperiments):
     def get_analyzed_experiment_data_for_blink_graphs(analyzed_experiments: AnalyzedExperiments):
         (num_of_blink_mean,
-         blink_num_mean) = analyzed_experiments.get_mean_number_of_blinks_and_duration()
+         blink_num_mean,
+         blinks_sem,
+         duration_sem) = analyzed_experiments.get_mean_number_of_blinks_and_duration()
 
         analyzed_experiments_single_experiments_num_blinks: dict[str: int] = {
             analyzed_experiment.experiment.experiment_real_id:
@@ -525,14 +538,21 @@ def get_blink_graphs(good_analyzed_experiments: AnalyzedExperiments,
             in sorted(analyzed_experiments.analyzed_experiments.values(),
                       key=lambda item: item.experiment.experiment_real_id)
         }
-        return num_of_blink_mean, blink_num_mean, analyzed_experiments_single_experiments_num_blinks
+        return (num_of_blink_mean, blink_num_mean, analyzed_experiments_single_experiments_num_blinks,
+                blinks_sem, duration_sem)
 
-    (good_num_of_blink_mean, good_blink_num_mean,
-     good_experiments_single_experiments_num_blinks) = get_analyzed_experiment_data_for_blink_graphs(
+    (good_num_of_blink_mean,
+     good_blink_num_mean,
+     good_experiments_single_experiments_num_blinks,
+     good_blinks_sem,
+     good_duration_sem) = get_analyzed_experiment_data_for_blink_graphs(
         good_analyzed_experiments
     )
-    (bad_num_of_blink_mean, bad_blink_num_mean,
-     bad_experiments_single_experiments_num_blinks) = get_analyzed_experiment_data_for_blink_graphs(
+    (bad_num_of_blink_mean,
+     bad_blink_num_mean,
+     bad_experiments_single_experiments_num_blinks,
+     bad_blinks_sem,
+     bad_duration_sem) = get_analyzed_experiment_data_for_blink_graphs(
         bad_analyzed_experiments
     )
 
@@ -541,17 +561,23 @@ def get_blink_graphs(good_analyzed_experiments: AnalyzedExperiments,
         for experiment_real_id, good_num_duration in good_experiments_single_experiments_num_blinks.items()
     }
 
-    mean_num_of_blinks_fig, _ = return_bar_graph([str(Eyesight.GOOD), str(Eyesight.BAD)],
-                                                 [good_num_of_blink_mean, bad_num_of_blink_mean],
-                                                 "Eyesight",
-                                                 "Blinks (Average)",
-                                                 "Average Number of Blinks")
+    mean_num_of_blinks_fig, _ = create_bar_graph(
+        [str(Eyesight.GOOD), str(Eyesight.BAD)],
+        [good_num_of_blink_mean, bad_num_of_blink_mean],
+        "Eyesight",
+        "Blinks (Average)",
+        "Average Number of Blinks",
+        y_errors=[good_blinks_sem, bad_blinks_sem]
+    )
 
-    mean_duration_fig, _ = return_bar_graph([str(Eyesight.GOOD), str(Eyesight.BAD)],
-                                            [good_blink_num_mean, bad_blink_num_mean],
-                                            "Eyesight",
-                                            "Blink Duration (Average)",
-                                            "Average Blink Duration [ms]")
+    mean_duration_fig, _ = create_bar_graph(
+        [str(Eyesight.GOOD), str(Eyesight.BAD)],
+        [good_blink_num_mean, bad_blink_num_mean],
+        "Eyesight",
+        "Blink Duration (Average)",
+        "Average Blink Duration [ms]",
+        y_errors=[good_duration_sem, bad_duration_sem]
+    )
 
     single_experiments_num_of_blinks_fig, _ = create_scattered_graph(
         {

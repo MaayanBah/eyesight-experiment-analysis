@@ -1,7 +1,6 @@
 from __future__ import annotations
-
 import math
-
+import numpy as np
 from configurations import MAX_DEVIATION
 import statistics
 from dataclasses import dataclass
@@ -469,30 +468,52 @@ class AnalyzedExperiments:
 
         return experiment_variances_sorted_by_time
 
-    @lru_cache(maxsize=3)
-    def get_mean_number_of_blinks_and_duration(self):
-        sum_blinks, sum_mean_duration = 0, 0
+    # @lru_cache(maxsize=3)
+    # def get_mean_number_of_blinks_and_duration(self):
+    #     sum_blinks, sum_mean_duration = 0, 0
+    #     for analyzed_experiment_id, analyzed_experiment in self.__analyzed_experiments.items():
+    #         num_blinks, blinks_duration_mean = analyzed_experiment.get_num_of_blinks_and_mean_duration_in_video()
+    #         sum_blinks += num_blinks
+    #         sum_mean_duration += blinks_duration_mean
+
+        # return sum_blinks / len(self.__experiments), sum_mean_duration / len(self.__experiments)
+
+    def get_mean_number_of_blinks_and_duration(self) -> tuple[float, float, float, float]:
+        blink_counts = []
+        blink_durations = []
+
         for analyzed_experiment_id, analyzed_experiment in self.__analyzed_experiments.items():
             num_blinks, blinks_duration_mean = analyzed_experiment.get_num_of_blinks_and_mean_duration_in_video()
-            sum_blinks += num_blinks
-            sum_mean_duration += blinks_duration_mean
+            blink_counts.append(num_blinks)
+            blink_durations.append(blinks_duration_mean)
 
-        return sum_blinks / len(self.__experiments), sum_mean_duration / len(self.__experiments)
+        blink_counts_mean: float = statistics.mean(blink_counts)
+        duration_mean: float = statistics.mean(blink_durations)
+
+        blinks_sem: float = statistics.stdev(blink_counts) / (len(blink_counts) ** 0.5)
+        duration_sem: float = statistics.stdev(blink_durations) / (len(blink_durations) ** 0.5)
+
+        return blink_counts_mean, duration_mean, blinks_sem, duration_sem
 
     @lru_cache(maxsize=3)
-    def get_mean_fixations_count_and_duration(self) -> tuple[float, float]:
-        sum_fixations, sum_duration = 0, 0
+    def get_mean_fixations_count_and_duration(self) -> tuple[float, ...]:
+        #sum_fixations, sum_duration = 0, 0
+        fixations_counts = []
+        durations = []
 
         for analyzed_experiment_id, analyzed_experiment in self.__analyzed_experiments.items():
             num_fixations, duration_mean = analyzed_experiment.get_num_of_fixation_and_mean_duration_in_video()
-            sum_fixations += num_fixations
-            sum_duration += duration_mean
+            durations.append(duration_mean)
 
-        fixations_mean: float = sum_fixations / len(self.__analyzed_experiments.keys())
+            fixations_counts.append(num_fixations)
 
-        duration_mean: float = sum_duration / len(self.__analyzed_experiments.keys())
+        fixations_mean: float = statistics.mean(fixations_counts)
+        duration_mean: float = statistics.mean(durations)
 
-        return fixations_mean, duration_mean
+        fixations_sem: float = statistics.stdev(fixations_counts) / (len(fixations_counts) ** 0.5)
+        duration_sem: float = statistics.stdev(durations) / (len(durations) ** 0.5)
+
+        return fixations_mean, duration_mean, fixations_sem, duration_sem
 
     @lru_cache(maxsize=3)
     def get_list_of_mean_fixations_count_and_duration_per_experiment(self) -> tuple[list[int], list[int]]:
