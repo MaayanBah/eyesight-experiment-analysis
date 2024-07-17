@@ -5,8 +5,9 @@ from graphs import (create_graphs_of_good_vs_bad_eyesight_fixation_data,
                     matplotlib_figures_to_pdf, get_gaze_variance_graphs, get_blink_graphs,
                     get_fixations_number_graphs,
                     create_fixations_count_and_duration_k_means_graph,
-                    get_x_y_coordinates_through_time_graphs)
-from AnalyzedExperiments import (AnalyzedExperiments, AnalyzedExperimentsParameters,
+                    get_x_y_coordinates_through_time_graphs,
+                    pca_graphs)
+from AnalyzedExperiments import (AnalyzedExperiments, AnalyzedExperiment, AnalyzedExperimentsParameters,
                                  split_experiments_by_eyesight, get_mapped_gaze_start_time_to_end_time,
                                  get_raw_data_fixation_start_time_to_end_time)
 import matplotlib as plt
@@ -31,15 +32,20 @@ def get_the_analyzed_experiments_data(
 
 def create_graphs(good_analyzed_experiments: AnalyzedExperiments,
                   bad_analyzed_experiments: AnalyzedExperiments) -> list[plt.figure]:
+    ids_order: list[AnalyzedExperiment] = [
+        experiment.experiment.experiment_real_id for experiment in good_analyzed_experiments.analyzed_experiments.values()
+    ]
     (num_of_fixations_fig,
      fixation_duration_fig,
      single_experiments_num_fixations,
      fixation_differences_fig,
      single_experiments_num_fixations_y_good_x_bad,
+     num_fixations_y_good_x_bad,
      single_experiments_duration_mean,
      duration_mean_differences_fig,
-     single_experiments_duration_mean_y_good_x_bad) = create_graphs_of_good_vs_bad_eyesight_fixation_data(
-        good_analyzed_experiments, bad_analyzed_experiments
+     single_experiments_duration_mean_y_good_x_bad,
+     duration_mean_y_good_x_bad) = create_graphs_of_good_vs_bad_eyesight_fixation_data(
+        good_analyzed_experiments, bad_analyzed_experiments, ids_order
     )
 
     (fixations_count_and_duration_divided_to_good_bad_graph,
@@ -59,8 +65,9 @@ def create_graphs(good_analyzed_experiments: AnalyzedExperiments,
      mean_blinks_duration_fig,
      single_experiments_num_of_blinks_fig,
      num_of_blinks_differences,
-     single_experiments_num_of_blinks_fig_y_good_x_bad) = get_blink_graphs(
-        good_analyzed_experiments, bad_analyzed_experiments
+     single_experiments_num_of_blinks_fig_y_good_x_bad,
+     num_of_blinks_fig_y_good_x_bad) = get_blink_graphs(
+        good_analyzed_experiments, bad_analyzed_experiments, ids_order
     )
 
     (x_coordinates_through_time_gaze_fig,
@@ -71,6 +78,9 @@ def create_graphs(good_analyzed_experiments: AnalyzedExperiments,
         good_analyzed_experiments, bad_analyzed_experiments
     )
 
+    pca_graphs(
+        num_fixations_y_good_x_bad, duration_mean_y_good_x_bad, num_of_blinks_fig_y_good_x_bad
+    )
     return [num_of_fixations_fig_sorted_by_time,
             fig_fixation_count_stdev,
             x_coordinates_through_time_fixations_fig,
