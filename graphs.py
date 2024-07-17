@@ -364,7 +364,7 @@ def create_graphs_of_good_vs_bad_eyesight_fixation_data(
         "Average Fixation Duration [ms]\n"
         f"t-statistic:{t_stat_duration_mean:.3f},"
         f" p-value: {p_value_duration_mean:.3f},"
-        f"correlation: {correlation_duration_mean:.3f}",
+        f" correlation: {correlation_duration_mean:.3f}",
         y_errors=[good_duration_sem, bad_duration_sem]
     )
 

@@ -49,13 +49,23 @@ def screen_location_variance(screen_locations: set[ScreenLocation],
     return x_variance + y_variance
 
 
-def get_mapped_gaze_start_time_to_end_time(experiments: list[Experiment]) -> tuple[int, int]:
+def get_mapped_gaze_start_time_to_end_time(experiments: list[Experiment]) -> tuple[int, int, int, int]:
     latest_first_saccade_time_ns: int = max(
         experiment.mapped_gaze_on_video.gaze["timestamp [ns]"].iloc[0]
         for experiment in experiments
     )
 
+    earliest_first_saccade_time_ns: int = min(
+        experiment.mapped_gaze_on_video.gaze["timestamp [ns]"].iloc[0]
+        for experiment in experiments
+    )
+
     earliest_last_saccade_time_ns: int = min(
+        experiment.mapped_gaze_on_video.gaze["timestamp [ns]"].iloc[-1]
+        for experiment in experiments
+    )
+
+    latest_last_saccade_time_ns: int = max(
         experiment.mapped_gaze_on_video.gaze["timestamp [ns]"].iloc[-1]
         for experiment in experiments
     )
@@ -85,7 +95,12 @@ def limit_standard_deviation(values: list[int | float],
     return filtered_values
 
 
-def get_raw_data_fixation_start_time_to_end_time(experiments: list[Experiment]) -> tuple[int, int]:
+def get_raw_data_fixation_start_time_to_end_time(experiments: list[Experiment]) -> tuple[int, int, int, int]:
+    earliest_first_fixation_time_ns: int = min(
+        experiment.mapped_gaze_on_video.fixations["start timestamp [ns]"].iloc[0]
+        for experiment in experiments
+    )
+
     latest_first_fixation_time_ns: int = max(
         experiment.mapped_gaze_on_video.fixations["start timestamp [ns]"].iloc[0]
         for experiment in experiments
@@ -96,7 +111,15 @@ def get_raw_data_fixation_start_time_to_end_time(experiments: list[Experiment]) 
         for experiment in experiments
     )
 
-    return latest_first_fixation_time_ns, earliest_last_fixation_time_ns
+    latest_last_fixation_time_ns: int = max(
+        experiment.mapped_gaze_on_video.fixations["start timestamp [ns]"].iloc[-1]
+        for experiment in experiments
+    )
+
+    return (earliest_first_fixation_time_ns,
+            latest_first_fixation_time_ns,
+            earliest_last_fixation_time_ns,
+            latest_last_fixation_time_ns)
 
 
 def split_experiments_by_eyesight(experiments: list[Experiment]) -> tuple[list[Experiment], list[Experiment]]:
@@ -116,8 +139,10 @@ def split_experiments_by_eyesight(experiments: list[Experiment]) -> tuple[list[E
 class AnalyzedExperimentsParameters:
     gaze_start_time: int
     gaze_end_time: int
-    fixation_start_time: int
-    fixation_end_time: int
+    fixation_earliest_first_fixation_time_ns: int
+    fixation_latest_first_fixation_time_ns: int
+    fixation_earliest_last_fixation_time_ns: int
+    fixation_latest_last_fixation_time_ns: int
     delta_time: int
 
 
@@ -128,7 +153,7 @@ def gaze_time_to_index(period_start_time: int,
 
 def fixation_time_to_index(period_start_time: int,
                            parameters: AnalyzedExperimentsParameters) -> int:
-    return (period_start_time - parameters.fixation_start_time) // parameters.delta_time
+    return (period_start_time - parameters.fixation_earliest_first_fixation_time_ns) // parameters.delta_time
 
 
 class AnalyzedExperiment:
@@ -168,8 +193,8 @@ class AnalyzedExperiment:
                                 parameters: AnalyzedExperimentsParameters) -> list[set[ScreenLocation]]:
         fixations_locations_by_time: list[set[ScreenLocation]] = []
 
-        for current_start_time in range(parameters.fixation_start_time,
-                                        parameters.fixation_end_time,
+        for current_start_time in range(parameters.fixation_earliest_first_fixation_time_ns,
+                                        parameters.fixation_latest_last_fixation_time_ns,
                                         parameters.delta_time):
             experiment_fixation = experiment.mapped_gaze_on_video.fixations
             fixations_in_time_period: pandas.DataFrame = experiment_fixation[
@@ -378,8 +403,8 @@ class AnalyzedExperiments:
                 },
                 max_deviation=max_deviation
             )
-            for period_start_time in range(self.__parameters.fixation_start_time,
-                                           self.__parameters.fixation_end_time,
+            for period_start_time in range(self.__parameters.fixation_earliest_first_fixation_time_ns,
+                                           self.__parameters.fixation_latest_last_fixation_time_ns,
                                            self.__parameters.delta_time)
         ]
 
@@ -389,8 +414,8 @@ class AnalyzedExperiments:
         sem_fixation_locations_sorted_by_time_x = []
         sem_fixation_locations_sorted_by_time_y = []
 
-        for period_start_time in range(self.__parameters.fixation_start_time,
-                                       self.__parameters.fixation_end_time,
+        for period_start_time in range(self.__parameters.fixation_earliest_first_fixation_time_ns,
+                                       self.__parameters.fixation_latest_last_fixation_time_ns,
                                        self.__parameters.delta_time):
 
             fixation_locations_x = [
@@ -434,8 +459,8 @@ class AnalyzedExperiments:
                     ])
                 for analyzed_experiment in self.__analyzed_experiments.values()
             ]
-            for period_start_time in range(self.__parameters.fixation_start_time,
-                                           self.__parameters.fixation_end_time,
+            for period_start_time in range(self.__parameters.fixation_earliest_first_fixation_time_ns,
+                                           self.__parameters.fixation_latest_last_fixation_time_ns,
                                            self.__parameters.delta_time)
         ]
         return fixation_count_sorted_by_time
