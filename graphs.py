@@ -1,9 +1,7 @@
 from __future__ import annotations
-
 import math
 import statistics
 from enum import Enum
-
 import numpy as np
 from matplotlib.backends.backend_pdf import PdfPages
 from AnalyzedExperiments import AnalyzedExperiments, limit_standard_deviation
@@ -11,7 +9,7 @@ from itertools import zip_longest
 from sklearn.cluster import KMeans
 import matplotlib.pyplot as plt
 from experiment_types import Eyesight, ScreenLocation
-from configurations import MAX_DEVIATION, RED, DARK_RED, GREEN, DARK_GREEN, BLUE, LIGHT_GREY, LIGHT_BLUE
+from configurations import MAX_DEVIATION, RED, DARK_RED, GREEN, DARK_GREEN, BLUE, LIGHT_GREY, LIGHT_BLUE, LIGHT_PURPLE
 
 
 class GraphType(Enum):
@@ -45,7 +43,8 @@ def create_time_series_scattered_or_line_graph_sorted_by_time(group_name_to_loca
                                                               line_width: float = 1,
                                                               add_fill_between: bool = False,
                                                               figsize=(20, 6),
-                                                              fill_between_values:dict[str, list[float]] = None) -> tuple[plt.figure, any]:
+                                                              fill_between_values: dict[str, list[float]] = None
+                                                              ) -> tuple[plt.figure, any]:
     """
     :param fill_between_values:
     :param figsize:
@@ -64,7 +63,6 @@ def create_time_series_scattered_or_line_graph_sorted_by_time(group_name_to_loca
     :return: The new figure and the ax_dict (for more info look at matplotlib.subplots documentation)
     """
     fig, ax = plt.subplots(figsize=figsize)
-    legend_group_names_to_plots = {}
     try_handles = []
     try_labels = []
     for group_name, locations in group_name_to_locations.items():
@@ -82,7 +80,8 @@ def create_time_series_scattered_or_line_graph_sorted_by_time(group_name_to_loca
                 x_values,
                 locations, color=group_name_to_color[group_name],
                 label=group_name,
-                linewidth=line_width
+                linewidth=line_width,
+                zorder=1
             )
             if add_fill_between and group_name in fill_between_values.keys():
                 lower_bound = locations - np.array(fill_between_values[group_name])
@@ -92,7 +91,8 @@ def create_time_series_scattered_or_line_graph_sorted_by_time(group_name_to_loca
                     lower_bound,
                     upper_bound,
                     color=group_name_to_color[group_name],
-                    alpha=0.3
+                    alpha=0.3,
+                    zorder=2
                 )
         if group_name in legend_group_names:
             try_handles.append(cur_plot)
@@ -120,8 +120,9 @@ def create_scattered_graph(group_name_to_locations: dict[str, list[ScreenLocatio
                            y_label: str,
                            title: str,
                            dot_size: int = 20,
-                           create_legend = True) -> tuple[plt.figure, any]:
+                           create_legend=True) -> tuple[plt.figure, any]:
     """
+    :param create_legend:
     :param dot_size:
     :param group_name_to_locations: A dictionary from group name to a list of x, y indexes tuple.
     :param group_name_to_color: A dictionary from group name to the color of it in the plot.
@@ -294,6 +295,23 @@ def create_graphs_of_good_vs_bad_eyesight_fixation_data(
         "Fixations difference per Experiment",
     )
 
+    single_experiments_num_fixations_y_good_x_bad, _ = create_scattered_graph(
+        {
+            "Experiments": [
+                ScreenLocation(
+                    bad_real_id_to_num_fixations[experiment_real_id],
+                    number_of_fixations)
+                for experiment_real_id, number_of_fixations in good_real_id_to_num_fixations.items()
+            ]
+        },
+        {
+            "Experiments": LIGHT_PURPLE
+        },
+        "Bad Eyesight Number of Fixations",
+        "Good Eyesight Number of Fixations",
+        "Number of fixations per Experiment",
+    )
+
     single_experiments_duration_mean, _ = create_scattered_graph(
         {
             str(Eyesight.GOOD): [
@@ -329,12 +347,31 @@ def create_graphs_of_good_vs_bad_eyesight_fixation_data(
         "Duration Mean Difference per Experiment",
     )
 
+    single_experiments_duration_mean_y_good_x_bad, _ = create_scattered_graph(
+        {
+            "Experiments": [
+                ScreenLocation(
+                    bad_real_id_to_duration_mean[experiment_real_id], duration_mean
+                )
+                for experiment_real_id, duration_mean in good_real_id_to_duration_mean.items()
+            ]
+        },
+        {
+            "Experiments": LIGHT_PURPLE
+        },
+        "Bad Eyesight Duration Mean",
+        "Good Eyesight Duration Mean",
+        "Duration mean per Experiment",
+    )
+
     return (fixations_fig,
             duration_fig,
             single_experiments_num_fixations,
             fixation_differences_fig,
+            single_experiments_num_fixations_y_good_x_bad,
             single_experiments_duration_mean,
-            duration_mean_differences_fig)
+            duration_mean_differences_fig,
+            single_experiments_duration_mean_y_good_x_bad)
 
 
 def create_fixations_count_and_duration_k_means_graph(
@@ -603,7 +640,7 @@ def get_blink_graphs(good_analyzed_experiments: AnalyzedExperiments,
         {
             "Differences per experiment": [
                 ScreenLocation(int(experiment_real_id), num_blinks_differences)
-                for experiment_real_id,num_blinks_differences in num_blink_differences.items()
+                for experiment_real_id, num_blinks_differences in num_blink_differences.items()
             ]
         },
         {
@@ -614,7 +651,29 @@ def get_blink_graphs(good_analyzed_experiments: AnalyzedExperiments,
         "Number of Blinks Difference per Experiment",
     )
 
-    return mean_num_of_blinks_fig, mean_duration_fig, single_experiments_num_of_blinks_fig, num_of_blinks_differences
+    single_experiments_num_of_blinks_fig_y_good_x_bad, _ = create_scattered_graph(
+        {
+            "Experiment": [
+                ScreenLocation(
+                    bad_experiments_single_experiments_num_blinks[experiment_real_id],
+                    number_of_blinks
+                )
+                for experiment_real_id, number_of_blinks in good_experiments_single_experiments_num_blinks.items()
+            ]
+        },
+        {
+            "Experiment": LIGHT_PURPLE
+        },
+        "Bad Eyesight Number of Blinks",
+        "Good Eyesight Number of Blinks",
+        "Number of Blinks per Experiment",
+    )
+
+    return (mean_num_of_blinks_fig,
+            mean_duration_fig,
+            single_experiments_num_of_blinks_fig,
+            num_of_blinks_differences,
+            single_experiments_num_of_blinks_fig_y_good_x_bad)
 
 
 def get_x_y_coordinates_through_time_graphs(good_analyzed_experiments: AnalyzedExperiments,
@@ -743,8 +802,8 @@ def get_x_y_coordinates_through_time_graphs(good_analyzed_experiments: AnalyzedE
         ["Good Eyesight average", "Bad Eyesight average"],
         add_fill_between=True,
         fill_between_values={
-            "Good Eyesight average": good_gaze_x_stdev_sorted_by_time,
-            "Bad Eyesight average": bad_gaze_x_stdev_sorted_by_time
+            "Good Eyesight average": good_gaze_x_sem_sorted_by_time,
+            "Bad Eyesight average": bad_gaze_x_sem_sorted_by_time
         }
     )
 
@@ -768,8 +827,8 @@ def get_x_y_coordinates_through_time_graphs(good_analyzed_experiments: AnalyzedE
         ["Good Eyesight average", "Bad Eyesight average"],
         add_fill_between=True,
         fill_between_values={
-            "Good Eyesight average": good_gaze_y_stdev_sorted_by_time,
-            "Bad Eyesight average": bad_gaze_y_stdev_sorted_by_time
+            "Good Eyesight average": good_gaze_y_sem_sorted_by_time,
+            "Bad Eyesight average": bad_gaze_y_sem_sorted_by_time
         }
     )
 
@@ -816,10 +875,10 @@ def get_x_y_coordinates_through_time_graphs(good_analyzed_experiments: AnalyzedE
 
     y_values_fixations_fig, _ = create_time_series_scattered_or_line_graph_sorted_by_time(
         {
-            **good_experiments_y_fixation,
-            **bad_experiments_y_fixation,
             "Good Eyesight average": good_experiment_average_y_fixation,
-            "Bad Eyesight average": bad_experiment_average_y_fixation
+            "Bad Eyesight average": bad_experiment_average_y_fixation,
+            **good_experiments_y_fixation,
+            **bad_experiments_y_fixation
         },
         {
             **good_experiments_id_to_color_fixation,
