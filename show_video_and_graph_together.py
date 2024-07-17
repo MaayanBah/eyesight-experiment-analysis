@@ -5,11 +5,11 @@ import pandas as pd
 import numpy as np
 
 # Load data
-data = pd.read_csv('assets/fixation_average_sorted_by_time.csv', delimiter="\t", header=None)
+data = pd.read_csv('assets/fixation_average_sorted_by_time_real_data.csv', delimiter="\t", header=None)
 graph_data = {line_index: list(line) for line_index, line in data.iterrows()}
 
 # Video path
-video_path = r'C:\Maayan\First degree\fourth year\Project\run-experiment\assets\final_videos\Tom_and_Jerry.mp4'
+video_path = r'assets/Tom_and_Jerry_cut.mp4'
 
 # Set up the video capture
 cap = cv2.VideoCapture(video_path)
@@ -33,13 +33,13 @@ def update_plot(frame_number):
     start_index = max(start_index, 0)
     end_index = min(end_index, len(graph_data[0]))
 
-    y_data_good_graph = graph_data[0][start_index:end_index]  # Latest `segment_length` values
-    y_data_bad_graph = graph_data[1][start_index:end_index]  # Latest `segment_length` values
+    y_data_good_graph = graph_data[0][start_index:end_index]  # good
+    y_data_bad_graph = graph_data[1][start_index:end_index]  # bad
     x_data = range(len(y_data_good_graph))
 
     ax2.clear()  # Clear the previous plot
-    ax2.plot(x_data, y_data_good_graph, color='red', label='Graph 1')
-    ax2.plot(x_data, y_data_bad_graph, color='green', label='Graph 2')
+    ax2.plot(x_data, y_data_good_graph, color='green', label='Graph 1')
+    ax2.plot(x_data, y_data_bad_graph, color='red', label='Graph 2')
     ax2.set_xlim(0, segment_length)  # Set x-axis limit to 200 points
     ax2.set_title(f'Graph Display (Time: {current_time_sec:.2f} sec)')
     ax2.legend()

@@ -350,37 +350,39 @@ class AnalyzedExperiments:
         for period_start_time in range(self.__parameters.gaze_start_time,
                                        self.__parameters.gaze_end_time,
                                        self.__parameters.delta_time):
+            gaze_locations_x_mean = []
+            gaze_locations_y_mean = []
+            for analyzed_experiment in self.__analyzed_experiments.values():
+                gaze_locations_x_mean.append(statistics.mean([
+                    screen_location.x
+                    for screen_location in analyzed_experiment.screen_locations_sorted_by_time[
+                        gaze_time_to_index(period_start_time, self.__parameters)
+                    ]
+                ]))
 
-            gaze_locations_x = [
-                screen_location.x
-                for analyzed_experiment in self.__analyzed_experiments.values()
-                for screen_location in analyzed_experiment.screen_locations_sorted_by_time[
-                    gaze_time_to_index(period_start_time, self.__parameters)
-                ]
-            ]
+                gaze_locations_y_mean.append(statistics.mean([
+                    screen_location.y
+                    for screen_location in analyzed_experiment.screen_locations_sorted_by_time[
+                        gaze_time_to_index(period_start_time, self.__parameters)
+                    ]
+                ]))
 
-            gaze_locations_y = [
-                screen_location.y
-                for analyzed_experiment in self.__analyzed_experiments.values()
-                for screen_location in analyzed_experiment.screen_locations_sorted_by_time[
-                    gaze_time_to_index(period_start_time, self.__parameters)
-                ]
-            ]
-
-            if len(gaze_locations_x) > 1:
-                gaze_locations_filtered = limit_standard_deviation(gaze_locations_x, max_deviation)
+            if len(gaze_locations_x_mean) > 1:
+                gaze_locations_filtered = limit_standard_deviation(gaze_locations_x_mean, max_deviation)
                 deviation = statistics.stdev(gaze_locations_filtered)
                 stdev_gaze_locations_sorted_by_time_x.append(deviation)
-                sem_gaze_locations_sorted_by_time_x.append(deviation / math.sqrt(len(gaze_locations_x)))
+                sem_gaze_locations_sorted_by_time_x.append(deviation / math.sqrt(len(gaze_locations_x_mean)))
             else:
                 stdev_gaze_locations_sorted_by_time_x.append(0)
                 sem_gaze_locations_sorted_by_time_x.append(0)
 
-            if len(gaze_locations_y) > 1:
-                gaze_locations_filtered = limit_standard_deviation(gaze_locations_y, max_deviation)
+            if len(gaze_locations_y_mean) > 1:
+                gaze_locations_filtered = limit_standard_deviation(gaze_locations_y_mean, max_deviation)
                 deviation = statistics.stdev(gaze_locations_filtered)
                 stdev_gaze_locations_sorted_by_time_y.append(deviation)
-                sem_gaze_locations_sorted_by_time_y.append(deviation / math.sqrt(len(gaze_locations_y)))
+                print(gaze_locations_y_mean)
+                print(f"{deviation} / {math.sqrt(len(gaze_locations_y_mean))} = {deviation / math.sqrt(len(gaze_locations_y_mean))}")
+                sem_gaze_locations_sorted_by_time_y.append(deviation / math.sqrt(len(gaze_locations_y_mean)))
             else:
                 stdev_gaze_locations_sorted_by_time_y.append(0)
                 sem_gaze_locations_sorted_by_time_y.append(0)
