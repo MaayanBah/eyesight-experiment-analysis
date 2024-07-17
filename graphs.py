@@ -124,8 +124,9 @@ def create_scattered_graph(group_name_to_locations: dict[str, list[ScreenLocatio
                            title: str,
                            dot_size: int = 20,
                            create_legend=True,
-                           centroid=False) -> tuple[plt.figure, any]:
+                           add_middle_line=False) -> tuple[plt.figure, any]:
     """
+    :param add_middle_line:
     :param create_legend:
     :param dot_size:
     :param group_name_to_locations: A dictionary from group name to a list of x, y indexes tuple.
@@ -136,10 +137,6 @@ def create_scattered_graph(group_name_to_locations: dict[str, list[ScreenLocatio
     :return:
     """
     fig, ax = plt.subplots()
-
-    # Variables to store centroids
-    centroids_x = []
-    centroids_y = []
 
     for group_name, locations in group_name_to_locations.items():
         x_coords = [location.x for location in locations]
@@ -156,15 +153,13 @@ def create_scattered_graph(group_name_to_locations: dict[str, list[ScreenLocatio
         ax.set_ylabel(y_label)
         ax.set_title(title)
 
-        # Calculate the centroid of the group
-        centroid_x = sum(x_coords) / len(x_coords)
-        centroid_y = sum(y_coords) / len(y_coords)
-        centroids_x.append(centroid_x)
-        centroids_y.append(centroid_y)
-
-    # Draw a line through the centroids
-    if centroid:
-        ax.plot(centroids_x, centroids_y, 'k--', linewidth=1)  # 'k--' is for black dashed line
+        # Draw a line through the centroids
+        if add_middle_line:
+            coeffs = np.polyfit(x_coords, y_coords, 1)
+            slope, intercept = coeffs
+            x_vals = np.array(ax.get_xlim())
+            y_vals = intercept + slope * x_vals
+            ax.plot(x_vals, y_vals, color=group_name_to_color[group_name], linestyle='-', linewidth=1)
 
     if create_legend:
         ax.legend()
