@@ -126,6 +126,7 @@ def create_scattered_graph(group_name_to_locations: dict[str, list[ScreenLocatio
                            create_legend=True,
                            add_middle_line=False) -> tuple[plt.figure, any]:
     """
+    :param show_correlation:
     :param add_middle_line:
     :param create_legend:
     :param dot_size:
@@ -137,10 +138,15 @@ def create_scattered_graph(group_name_to_locations: dict[str, list[ScreenLocatio
     :return:
     """
     fig, ax = plt.subplots()
+    all_x_coords = []
+    all_y_coords = []
 
     for group_name, locations in group_name_to_locations.items():
         x_coords = [location.x for location in locations]
         y_coords = [location.y for location in locations]
+
+        all_x_coords.extend(x_coords)
+        all_y_coords.extend(y_coords)
 
         # Create a scatter plot for each group
         ax.scatter(x_coords,
@@ -151,9 +157,7 @@ def create_scattered_graph(group_name_to_locations: dict[str, list[ScreenLocatio
         # Add labels and title
         ax.set_xlabel(x_label)
         ax.set_ylabel(y_label)
-        ax.set_title(title)
 
-        # Draw a line through the centroids
         if add_middle_line:
             coeffs = np.polyfit(x_coords, y_coords, 1)
             slope, intercept = coeffs
@@ -164,6 +168,7 @@ def create_scattered_graph(group_name_to_locations: dict[str, list[ScreenLocatio
     if create_legend:
         ax.legend()
 
+    ax.set_title(title)
     return fig, ax
 
 
@@ -262,22 +267,25 @@ def create_graphs_of_good_vs_bad_eyesight_fixation_data(
         for experiment_real_id, good_duration_mean in good_real_id_to_duration_mean.items()
     }
 
+    t_stat_num_fixations, p_value_num_fixations = stats.ttest_rel(
+        [bad_real_id_to_num_fixations[id_] for id_ in ids_order],
+        [good_real_id_to_num_fixations[id_] for id_ in ids_order]
+    )
+    correlation_num_fixations = np.corrcoef(
+        [bad_real_id_to_num_fixations[id_] for id_ in ids_order],
+        [good_real_id_to_num_fixations[id_] for id_ in ids_order]
+    )[0, 1]
+
     fixations_fig, _ = create_bar_graph(
         [str(Eyesight.GOOD), str(Eyesight.BAD)],
         [good_num_of_fixation_mean, bad_num_of_fixation_mean],
         "Eyesight",
         "Number of Fixations (Average)",
-        "Average Number of Fixations",
+        "Average Number of Fixations\n"
+        f"t-statistic:{t_stat_num_fixations:.3f},"
+        f" p-value: {p_value_num_fixations:.3f},"
+        f" correlation: {correlation_num_fixations:.3f}",
         y_errors=[good_fixations_sem, bad_fixations_sem]
-    )
-
-    duration_fig, _ = create_bar_graph(
-        [str(Eyesight.GOOD), str(Eyesight.BAD)],
-        [good_duration_mean, bad_duration_mean],
-        "Eyesight",
-        "Average Duration",
-        "Average Fixation Duration [ms]",
-        y_errors=[good_duration_sem, bad_duration_sem]
     )
 
     single_experiments_num_fixations, _ = create_scattered_graph(
@@ -315,17 +323,13 @@ def create_graphs_of_good_vs_bad_eyesight_fixation_data(
         "Fixations difference per Experiment",
     )
 
-    t_stat_num_fixations, p_value_num_fixations = stats.ttest_rel(
-        [bad_real_id_to_num_fixations[id_] for id_ in ids_order],
-        [good_real_id_to_num_fixations[id_] for id_ in ids_order]
-    )
-
     num_fixations_y_good_x_bad: list[ScreenLocation] = [
         ScreenLocation(
             bad_real_id_to_num_fixations[experiment_real_id],
             good_real_id_to_num_fixations[experiment_real_id])
         for experiment_real_id in ids_order
     ]
+
     single_experiments_num_fixations_y_good_x_bad, _ = create_scattered_graph(
         {
             "Experiments": num_fixations_y_good_x_bad
@@ -335,9 +339,32 @@ def create_graphs_of_good_vs_bad_eyesight_fixation_data(
         },
         "Bad Eyesight Number of Fixations",
         "Good Eyesight Number of Fixations",
-        f"Number of fixations per Experiment\nt-statistic:{t_stat_num_fixations:.3f},"
-        f" p-value: {p_value_num_fixations:.3f}",
-        centroid=True
+        f"Number of fixations per Experiment\n"
+        f"t-statistic:{t_stat_num_fixations:.3f},"
+        f" p-value: {p_value_num_fixations:.3f},"
+        f" correlation: {correlation_num_fixations:.3f}",
+        add_middle_line=True)
+
+    t_stat_duration_mean, p_value_duration_mean = stats.ttest_rel(
+        [bad_real_id_to_duration_mean[id_] for id_ in ids_order],
+        [good_real_id_to_duration_mean[id_] for id_ in ids_order]
+    )
+
+    correlation_duration_mean = np.corrcoef(
+        [bad_real_id_to_duration_mean[id_] for id_ in ids_order],
+        [good_real_id_to_duration_mean[id_] for id_ in ids_order]
+    )[0, 1]
+
+    duration_fig, _ = create_bar_graph(
+        [str(Eyesight.GOOD), str(Eyesight.BAD)],
+        [good_duration_mean, bad_duration_mean],
+        "Eyesight",
+        "Average Duration",
+        "Average Fixation Duration [ms]\n"
+        f"t-statistic:{t_stat_duration_mean:.3f},"
+        f" p-value: {p_value_duration_mean:.3f},"
+        f"correlation: {correlation_duration_mean:.3f}",
+        y_errors=[good_duration_sem, bad_duration_sem]
     )
 
     single_experiments_duration_mean, _ = create_scattered_graph(
@@ -375,11 +402,6 @@ def create_graphs_of_good_vs_bad_eyesight_fixation_data(
         "Duration Mean Difference per Experiment",
     )
 
-    t_stat_duration_mean, p_value_duration_mean = stats.ttest_rel(
-        [bad_real_id_to_duration_mean[id_] for id_ in ids_order],
-        [good_real_id_to_duration_mean[id_] for id_ in ids_order]
-    )
-
     duration_mean_y_good_x_bad: list[ScreenLocation] = [
         ScreenLocation(
             bad_real_id_to_duration_mean[experiment_real_id],
@@ -396,9 +418,11 @@ def create_graphs_of_good_vs_bad_eyesight_fixation_data(
         },
         "Bad Eyesight Duration Mean",
         "Good Eyesight Duration Mean",
-        f"Duration mean per Experiment\nt-statistic:{t_stat_duration_mean:.3f},"
-        f" p-value: {p_value_duration_mean:.3f}",
-        centroid=True
+        f"Duration mean per Experiment\n"
+        f"t-statistic:{t_stat_duration_mean:.3f},"
+        f" p-value: {p_value_duration_mean:.3f}"
+        f"correlation: {correlation_duration_mean:.3f}",
+        add_middle_line=True
     )
 
     return (fixations_fig,
@@ -633,6 +657,16 @@ def get_blink_graphs(good_analyzed_experiments: AnalyzedExperiments,
         bad_analyzed_experiments
     )
 
+    t_stat_num_blinks, p_value_num_blinks = stats.ttest_rel(
+        [bad_experiments_single_experiments_num_blinks[id_] for id_ in ids_order],
+        [good_experiments_single_experiments_num_blinks[id_] for id_ in ids_order]
+    )
+
+    correlation_num_blinks = np.corrcoef(
+        [bad_experiments_single_experiments_num_blinks[id_] for id_ in ids_order],
+        [good_experiments_single_experiments_num_blinks[id_] for id_ in ids_order]
+    )[0, 1]
+
     num_blink_differences: dict[int: int] = {
         experiment_real_id: good_num_duration - bad_experiments_single_experiments_num_blinks[experiment_real_id]
         for experiment_real_id, good_num_duration in good_experiments_single_experiments_num_blinks.items()
@@ -643,7 +677,9 @@ def get_blink_graphs(good_analyzed_experiments: AnalyzedExperiments,
         [good_num_of_blink_mean, bad_num_of_blink_mean],
         "Eyesight",
         "Blinks (Average)",
-        "Average Number of Blinks",
+        "Average Number of Blinks\nt-statistic:{t_stat_num_blinks:.3f},"
+        f" p-value: {p_value_num_blinks:.3f},"
+        f" correlation: {correlation_num_blinks:.3f}",
         y_errors=[good_blinks_sem, bad_blinks_sem]
     )
 
@@ -691,11 +727,6 @@ def get_blink_graphs(good_analyzed_experiments: AnalyzedExperiments,
         "Number of Blinks Difference per Experiment",
     )
 
-    t_stat_num_blinks, p_value_num_blinks = stats.ttest_rel(
-        [bad_experiments_single_experiments_num_blinks[id_] for id_ in ids_order],
-        [good_experiments_single_experiments_num_blinks[id_] for id_ in ids_order]
-    )
-
     num_of_blinks_fig_y_good_x_bad = [
         ScreenLocation(
             bad_experiments_single_experiments_num_blinks[experiment_real_id],
@@ -713,8 +744,9 @@ def get_blink_graphs(good_analyzed_experiments: AnalyzedExperiments,
         "Bad Eyesight Number of Blinks",
         "Good Eyesight Number of Blinks",
         f"Number of Blinks per Experiment\nt-statistic:{t_stat_num_blinks:.3f},"
-        f" p-value: {p_value_num_blinks:.3f}",
-        centroid=True
+        f" p-value: {p_value_num_blinks:.3f},"
+        f" correlation: {correlation_num_blinks:.3f}",
+        add_middle_line=True
     )
 
     return (mean_num_of_blinks_fig,
@@ -950,7 +982,7 @@ def get_x_y_coordinates_through_time_graphs(good_analyzed_experiments: AnalyzedE
     return x_values_gaze_fix, y_values_gaze_fig, x_values_fixations_fig, y_values_fixations_fig
 
 
-def pca_graphs(num_fixations_y_good_x_bad: list[ScreenLocation],
-               duration_mean_y_good_x_bad: list[ScreenLocation],
-               num_of_blinks_fig_y_good_x_bad: list[ScreenLocation]):
-    pass
+# def pca_graphs(num_fixations_y_good_x_bad: list[ScreenLocation],
+#                duration_mean_y_good_x_bad: list[ScreenLocation],
+#                num_of_blinks_fig_y_good_x_bad: list[ScreenLocation]):
+#     pass
