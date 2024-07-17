@@ -1,5 +1,8 @@
 from __future__ import annotations
+
+import csv
 import math
+import os.path
 import statistics
 from enum import Enum
 import numpy as np
@@ -254,8 +257,6 @@ def create_graphs_of_good_vs_bad_eyesight_fixation_data(
      bad_duration_mean,
      bad_fixations_sem,
      bad_duration_sem) = get_data_for_graphs(bad_analyzed_experiments)
-
-    # ids_order = good_real_id_to_num_fixations.keys()
 
     fixation_differences = {
         experiment_real_id: number_of_good_fixations - bad_real_id_to_num_fixations[experiment_real_id]
@@ -583,6 +584,11 @@ def get_fixations_number_graphs(good_analyzed_experiments: AnalyzedExperiments,
      bad_eyesight_fixation_average_sorted_by_time) = get_group_data_for_graphs(
         bad_analyzed_experiments
     )
+
+    with open(os.path.join("assets", "fixation_average_sorted_by_time.csv"), mode='w', newline='') as file:
+        writer = csv.writer(file, delimiter='\t')
+        writer.writerow(good_eyesight_fixation_average_sorted_by_time)
+        writer.writerow(bad_eyesight_fixation_average_sorted_by_time)
 
     fig_fixation_count, _ = create_time_series_scattered_or_line_graph_sorted_by_time(
         {
