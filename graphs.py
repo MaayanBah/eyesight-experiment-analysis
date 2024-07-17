@@ -123,7 +123,8 @@ def create_scattered_graph(group_name_to_locations: dict[str, list[ScreenLocatio
                            y_label: str,
                            title: str,
                            dot_size: int = 20,
-                           create_legend=True) -> tuple[plt.figure, any]:
+                           create_legend=True,
+                           centroid=False) -> tuple[plt.figure, any]:
     """
     :param create_legend:
     :param dot_size:
@@ -135,10 +136,18 @@ def create_scattered_graph(group_name_to_locations: dict[str, list[ScreenLocatio
     :return:
     """
     fig, ax = plt.subplots()
+
+    # Variables to store centroids
+    centroids_x = []
+    centroids_y = []
+
     for group_name, locations in group_name_to_locations.items():
+        x_coords = [location.x for location in locations]
+        y_coords = [location.y for location in locations]
+
         # Create a scatter plot for each group
-        ax.scatter([location.x for location in locations],
-                   [location.y for location in locations],
+        ax.scatter(x_coords,
+                   y_coords,
                    color=group_name_to_color[group_name],
                    label=group_name, s=dot_size)
 
@@ -146,6 +155,16 @@ def create_scattered_graph(group_name_to_locations: dict[str, list[ScreenLocatio
         ax.set_xlabel(x_label)
         ax.set_ylabel(y_label)
         ax.set_title(title)
+
+        # Calculate the centroid of the group
+        centroid_x = sum(x_coords) / len(x_coords)
+        centroid_y = sum(y_coords) / len(y_coords)
+        centroids_x.append(centroid_x)
+        centroids_y.append(centroid_y)
+
+    # Draw a line through the centroids
+    if centroid:
+        ax.plot(centroids_x, centroids_y, 'k--', linewidth=1)  # 'k--' is for black dashed line
 
     if create_legend:
         ax.legend()
@@ -323,6 +342,7 @@ def create_graphs_of_good_vs_bad_eyesight_fixation_data(
         "Good Eyesight Number of Fixations",
         f"Number of fixations per Experiment\nt-statistic:{t_stat_num_fixations:.3f},"
         f" p-value: {p_value_num_fixations:.3f}",
+        centroid=True
     )
 
     single_experiments_duration_mean, _ = create_scattered_graph(
@@ -382,7 +402,8 @@ def create_graphs_of_good_vs_bad_eyesight_fixation_data(
         "Bad Eyesight Duration Mean",
         "Good Eyesight Duration Mean",
         f"Duration mean per Experiment\nt-statistic:{t_stat_duration_mean:.3f},"
-        f" p-value: {p_value_duration_mean:.3f}"
+        f" p-value: {p_value_duration_mean:.3f}",
+        centroid=True
     )
 
     return (fixations_fig,
@@ -697,7 +718,8 @@ def get_blink_graphs(good_analyzed_experiments: AnalyzedExperiments,
         "Bad Eyesight Number of Blinks",
         "Good Eyesight Number of Blinks",
         f"Number of Blinks per Experiment\nt-statistic:{t_stat_num_blinks:.3f},"
-        f" p-value: {p_value_num_blinks:.3f}"
+        f" p-value: {p_value_num_blinks:.3f}",
+        centroid=True
     )
 
     return (mean_num_of_blinks_fig,
@@ -933,7 +955,7 @@ def get_x_y_coordinates_through_time_graphs(good_analyzed_experiments: AnalyzedE
     return x_values_gaze_fix, y_values_gaze_fig, x_values_fixations_fig, y_values_fixations_fig
 
 
-def pca_graphs(num_fixations_y_good_x_bad: list[float],
-               duration_mean_y_good_x_bad: list[float],
-               num_of_blinks_fig_y_good_x_bad: list[float]):
+def pca_graphs(num_fixations_y_good_x_bad: list[ScreenLocation],
+               duration_mean_y_good_x_bad: list[ScreenLocation],
+               num_of_blinks_fig_y_good_x_bad: list[ScreenLocation]):
     pass
