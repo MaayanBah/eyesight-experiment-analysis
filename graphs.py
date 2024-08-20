@@ -283,7 +283,7 @@ def create_graphs_of_good_vs_bad_eyesight_fixation_data(
         "Eyesight",
         "Number of Fixations (Average)",
         "Average Number of Fixations\n"
-        f"t-statistic:{t_stat_num_fixations:.3f},"
+        f"t-statistic: {t_stat_num_fixations:.3f},"
         f" p-value: {p_value_num_fixations:.3f},"
         f" correlation: {correlation_num_fixations:.3f}",
         y_errors=[good_fixations_sem, bad_fixations_sem]
@@ -304,9 +304,9 @@ def create_graphs_of_good_vs_bad_eyesight_fixation_data(
             str(Eyesight.GOOD): GREEN,
             str(Eyesight.BAD): RED
         },
-        "Experiment",
-        "Number of fixations",
-        "Number of fixations per Experiment",
+        "Participant",
+        "Number of Fixations",
+        "Number of Fixations per Experiment",
     )
 
     fixation_differences_fig, _ = create_scattered_graph(
@@ -317,11 +317,11 @@ def create_graphs_of_good_vs_bad_eyesight_fixation_data(
             ]
         },
         {
-            "Differences per experiment": LIGHT_BLUE
+            "Differences per Participant": LIGHT_BLUE
         },
-        "Experiment",
-        "Fixations difference",
-        "Fixations difference per Experiment",
+        "Participant",
+        "Fixations Difference",
+        "Fixations Difference per Experiment",
     )
 
     num_fixations_y_good_x_bad: list[ScreenLocation] = [
@@ -336,12 +336,12 @@ def create_graphs_of_good_vs_bad_eyesight_fixation_data(
             "Experiments": num_fixations_y_good_x_bad
         },
         {
-            "Experiments": LIGHT_PURPLE
+            "Participants": LIGHT_PURPLE
         },
         "Bad Eyesight Number of Fixations",
         "Good Eyesight Number of Fixations",
-        f"Number of fixations per Experiment\n"
-        f"t-statistic:{t_stat_num_fixations:.3f},"
+        f"Number of Fixations per Participant\n"
+        f"t-statistic: {t_stat_num_fixations:.3f},"
         f" p-value: {p_value_num_fixations:.3f},"
         f" correlation: {correlation_num_fixations:.3f}",
         add_middle_line=True)
@@ -362,7 +362,7 @@ def create_graphs_of_good_vs_bad_eyesight_fixation_data(
         "Eyesight",
         "Average Duration",
         "Average Fixation Duration [ms]\n"
-        f"t-statistic:{t_stat_duration_mean:.3f},"
+        f"t-statistic: {t_stat_duration_mean:.3f},"
         f" p-value: {p_value_duration_mean:.3f},"
         f" correlation: {correlation_duration_mean:.3f}",
         y_errors=[good_duration_sem, bad_duration_sem]
@@ -383,9 +383,9 @@ def create_graphs_of_good_vs_bad_eyesight_fixation_data(
             str(Eyesight.GOOD): GREEN,
             str(Eyesight.BAD): RED
         },
-        "Experiment",
-        "Duration mean",
-        "Duration mean per Experiment",
+        "Participant",
+        "Duration Mean",
+        "Duration Mean per Participant",
     )
 
     duration_mean_differences_fig, _ = create_scattered_graph(
@@ -398,9 +398,9 @@ def create_graphs_of_good_vs_bad_eyesight_fixation_data(
         {
             "Differences per experiment": LIGHT_BLUE
         },
-        "Experiment",
-        "Duration mean difference",
-        "Duration Mean Difference per Experiment",
+        "Participant",
+        "Duration Mean Difference",
+        "Duration Mean Difference per Participant",
     )
 
     duration_mean_y_good_x_bad: list[ScreenLocation] = [
@@ -415,12 +415,12 @@ def create_graphs_of_good_vs_bad_eyesight_fixation_data(
             "Experiments": duration_mean_y_good_x_bad
         },
         {
-            "Experiments": LIGHT_PURPLE
+            "Participants": LIGHT_PURPLE
         },
         "Bad Eyesight Duration Mean",
         "Good Eyesight Duration Mean",
-        f"Duration mean per Experiment\n"
-        f"t-statistic:{t_stat_duration_mean:.3f},"
+        f"Duration Mean per Participant\n"
+        f"t-statistic: {t_stat_duration_mean:.3f},"
         f" p-value: {p_value_duration_mean:.3f}"
         f"correlation: {correlation_duration_mean:.3f}",
         add_middle_line=True
@@ -464,16 +464,16 @@ def create_fixations_count_and_duration_k_means_graph(
     fixations_count_and_duration_divided_to_good_bad_graph, _ = create_scattered_graph(
         {str(Eyesight.GOOD): good_fixations_durations, str(Eyesight.BAD): bad_fixations_durations},
         {str(Eyesight.GOOD): GREEN, str(Eyesight.BAD): RED},
-        "fixation count",
-        "fixation duration",
-        "Fixation count vs fixation duration for each experiment")
+        "Fixation Count",
+        "Fixation Duration",
+        "Fixation Count vs Fixation Duration for each experiment")
 
     fixations_count_and_duration_k_means_graph, _ = create_scattered_k_means_graph(
         list(zip(fixations_counts, duration_means)),
         2,
-        "fixation count",
-        "fixations duration",
-        "Fixation count vs fixation duration -K Means"
+        "Fixation Count",
+        "Fixation Duration",
+        "Fixation Count vs Fixation Duration - K-Means"
     )
 
     return fixations_count_and_duration_divided_to_good_bad_graph, fixations_count_and_duration_k_means_graph
@@ -526,7 +526,7 @@ def get_gaze_variance_graphs(good_analyzed_experiments: AnalyzedExperiments,
     fig_variance_mean, _ = create_time_series_scattered_or_line_graph_sorted_by_time(
         {str(Eyesight.GOOD): good_variances_means, str(Eyesight.BAD): bad_variances_means},
         {str(Eyesight.GOOD): GREEN, str(Eyesight.BAD): RED},
-        "Time passed",
+        "Time Passed",
         "Gaze Variance (Average)",
         "Average Gaze Variance (Screen Coordinates)",
         GraphType.Scattered,
@@ -556,11 +556,14 @@ def get_fixations_number_graphs(good_analyzed_experiments: AnalyzedExperiments,
             zip(eyesight_stdev, eyesight_fixation_count_sorted_by_time_limited_stdev)
         ]
 
+        print("fix len")
+        print([len(fixation_count) for fixation_count
+            in eyesight_fixation_count_sorted_by_time_limited_stdev])
         eyesight_fixation_average_sorted_by_time = [
             sum(fixation_count) / len(fixation_count) for fixation_count
             in eyesight_fixation_count_sorted_by_time_limited_stdev
         ]
-        return (eyesight_stdev,
+        return (eyesight_stfdev,
                 eyesight_sem,
                 eyesight_fixation_average_sorted_by_time)
 
@@ -601,7 +604,7 @@ def get_fixations_number_graphs(good_analyzed_experiments: AnalyzedExperiments,
         },
         "Time",
         "Fixations (Average)",
-        "Average Number of Fixations\n(Excluding data Beyond 2 Standard Deviations)",
+        "Average Number of Fixations\n(Excluding Data Beyond 2 Standard Deviations)",
         GraphType.Line,
         [str(Eyesight.GOOD), str(Eyesight.BAD)],
         add_fill_between=True,
@@ -621,8 +624,8 @@ def get_fixations_number_graphs(good_analyzed_experiments: AnalyzedExperiments,
             "Bad Eyesight Standard deviation": DARK_RED
         },
         "Time",
-        "Fixations Count Standard Decision",
-        "Fixations Count Standard Deviation\n(Excluding data Beyond 2 Standard Deviations)",
+        "Fixations Count Standard Deviation",
+        "Fixations Count Standard Deviation\n(Excluding Data Beyond 2 Standard Deviations)",
         GraphType.Line,
         ["Good Eyesight Standard deviation", "Bad Eyesight Standard deviation"]
     )
@@ -683,7 +686,7 @@ def get_blink_graphs(good_analyzed_experiments: AnalyzedExperiments,
         [good_num_of_blink_mean, bad_num_of_blink_mean],
         "Eyesight",
         "Blinks (Average)",
-        "Average Number of Blinks\nt-statistic:{t_stat_num_blinks:.3f},"
+        f"Average Number of Blinks\nt-statistic: {t_stat_num_blinks:.3f},"
         f" p-value: {p_value_num_blinks:.3f},"
         f" correlation: {correlation_num_blinks:.3f}",
         y_errors=[good_blinks_sem, bad_blinks_sem]
@@ -713,9 +716,9 @@ def get_blink_graphs(good_analyzed_experiments: AnalyzedExperiments,
             str(Eyesight.GOOD): GREEN,
             str(Eyesight.BAD): RED
         },
-        "Experiment",
+        "Participant",
         "Number of Blinks",
-        "Number of Blinks per Experiment",
+        "Number of Blinks per Participant",
     )
 
     num_of_blinks_differences, _ = create_scattered_graph(
@@ -728,9 +731,9 @@ def get_blink_graphs(good_analyzed_experiments: AnalyzedExperiments,
         {
             "Differences per experiment": LIGHT_BLUE
         },
-        "Experiment",
-        "Number of blinks difference",
-        "Number of Blinks Difference per Experiment",
+        "Participant",
+        "Number of Blinks Difference",
+        "Number of Blinks Difference per Participant",
     )
 
     num_of_blinks_fig_y_good_x_bad = [
@@ -749,7 +752,7 @@ def get_blink_graphs(good_analyzed_experiments: AnalyzedExperiments,
         },
         "Bad Eyesight Number of Blinks",
         "Good Eyesight Number of Blinks",
-        f"Number of Blinks per Experiment\nt-statistic:{t_stat_num_blinks:.3f},"
+        f"Number of Blinks per Experiment\nt-statistic: {t_stat_num_blinks:.3f},"
         f" p-value: {p_value_num_blinks:.3f},"
         f" correlation: {correlation_num_blinks:.3f}",
         add_middle_line=True
@@ -883,8 +886,8 @@ def get_x_y_coordinates_through_time_graphs(good_analyzed_experiments: AnalyzedE
             "Bad Eyesight average": RED
         },
         "Time",
-        "x value",
-        "x-axis values (gaze)\n(Excluding data Beyond 2 Standard Deviations)",
+        "X Value",
+        "X-Axis Values (Gaze)\n(Excluding Data Beyond 2 Standard Deviations)",
         GraphType.Line,
         ["Good Eyesight average", "Bad Eyesight average"],
         add_fill_between=True,
@@ -908,8 +911,8 @@ def get_x_y_coordinates_through_time_graphs(good_analyzed_experiments: AnalyzedE
             "Bad Eyesight average": RED
         },
         "Time",
-        "y value",
-        "y-axis values (gaze)\n(Excluding data Beyond 2 Standard Deviations)",
+        "Y Value",
+        "Y-Axis Values (Gaze)\n(Excluding Data Beyond 2 Standard Deviations)",
         GraphType.Line,
         ["Good Eyesight average", "Bad Eyesight average"],
         add_fill_between=True,
@@ -949,8 +952,8 @@ def get_x_y_coordinates_through_time_graphs(good_analyzed_experiments: AnalyzedE
             "Bad Eyesight average": RED
         },
         "Time",
-        "x value",
-        "x-axis values (fixations)\n(Excluding data Beyond 2 Standard Deviations)",
+        "X Value",
+        "X-Axis Values (Fixations)\n(Excluding Data Beyond 2 Standard Deviations)",
         GraphType.Line,
         ["Good Eyesight average", "Bad Eyesight average"],
         add_fill_between=True,
@@ -975,7 +978,7 @@ def get_x_y_coordinates_through_time_graphs(good_analyzed_experiments: AnalyzedE
         },
         "Time",
         "y value",
-        "y-axis values (fixations)\n(Excluding data Beyond 2 Standard Deviations)",
+        "Y-Axis Values (Fixations)\n(Excluding Data Beyond 2 Standard Deviations)",
         GraphType.Line,
         ["Good Eyesight average", "Bad Eyesight average"],
         add_fill_between=True,

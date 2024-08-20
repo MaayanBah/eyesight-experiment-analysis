@@ -380,8 +380,8 @@ class AnalyzedExperiments:
                 gaze_locations_filtered = limit_standard_deviation(gaze_locations_y_mean, max_deviation)
                 deviation = statistics.stdev(gaze_locations_filtered)
                 stdev_gaze_locations_sorted_by_time_y.append(deviation)
-                print(gaze_locations_y_mean)
-                print(f"{deviation} / {math.sqrt(len(gaze_locations_y_mean))} = {deviation / math.sqrt(len(gaze_locations_y_mean))}")
+                # print(gaze_locations_y_mean)
+                # print(f"{deviation} / {math.sqrt(len(gaze_locations_y_mean))} = {deviation / math.sqrt(len(gaze_locations_y_mean))}")
                 sem_gaze_locations_sorted_by_time_y.append(deviation / math.sqrt(len(gaze_locations_y_mean)))
             else:
                 stdev_gaze_locations_sorted_by_time_y.append(0)

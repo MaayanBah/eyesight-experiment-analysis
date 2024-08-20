@@ -41,7 +41,7 @@ def update_plot(frame_number):
     ax2.plot(x_data, y_data_good_graph, color='green', label='Graph 1')
     ax2.plot(x_data, y_data_bad_graph, color='red', label='Graph 2')
     ax2.set_xlim(0, segment_length)  # Set x-axis limit to 200 points
-    ax2.set_title(f'Graph Display (Time: {current_time_sec:.2f} sec)')
+    ax2.set_title(f'Average Number of Fixations (Time: {current_time_sec:.2f} sec)')
     ax2.legend()
 
 # Function to update video frame
@@ -51,7 +51,7 @@ def update_frame(frame_number):
         frame = cv2.cvtColor(frame, cv2.COLOR_BGR2RGB)  # Convert frame to RGB
         ax1.clear()  # Clear the previous video frame
         ax1.imshow(frame)
-        ax1.set_title('Video Display')
+        ax1.set_title('')
         ax1.axis('off')  # Turn off axis for better video display
 
 # Create animation
