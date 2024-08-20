@@ -6,7 +6,7 @@ from graphs import (create_graphs_of_good_vs_bad_eyesight_fixation_data,
                     get_fixations_number_graphs,
                     create_fixations_count_and_duration_k_means_graph,
                     get_x_y_coordinates_through_time_graphs,
-                    )
+                    plot_fft)
 from AnalyzedExperiments import (AnalyzedExperiments, AnalyzedExperiment, AnalyzedExperimentsParameters,
                                  split_experiments_by_eyesight, get_mapped_gaze_start_time_to_end_time,
                                  get_raw_data_fixation_start_time_to_end_time)
@@ -78,9 +78,22 @@ def create_graphs(good_analyzed_experiments: AnalyzedExperiments,
         good_analyzed_experiments, bad_analyzed_experiments
     )
 
-    # pca_graphs(
-    #     num_fixations_y_good_x_bad, duration_mean_y_good_x_bad, num_of_blinks_fig_y_good_x_bad
-    # )
+    (good_x_original_data_fig,
+     good_x_fft_mag_fig,
+     bad_x_original_data_fig,
+     bad_x_fft_mag_fig,
+     good_y_original_data_fig,
+     good_y_fft_mag_fig,
+     bad_y_original_data_fig,
+     bad_y_fft_mag_fig) = plot_fft(good_analyzed_experiments, bad_analyzed_experiments)
+    # return [good_x_original_data_fig,
+    #         good_x_fft_mag_fig,
+    #         bad_x_original_data_fig,
+    #         bad_x_fft_mag_fig,
+    #         good_y_original_data_fig,
+    #         good_y_fft_mag_fig,
+    #         bad_y_original_data_fig,
+    #         bad_y_fft_mag_fig]
     return [num_of_fixations_fig_sorted_by_time,
             fig_fixation_count_stdev,
             x_coordinates_through_time_fixations_fig,
@@ -102,7 +115,16 @@ def create_graphs(good_analyzed_experiments: AnalyzedExperiments,
             variance_fig,
             variance_mean_fig,
             x_coordinates_through_time_gaze_fig,
-            y_coordinates_through_time_gaze_fig]
+            y_coordinates_through_time_gaze_fig,
+            good_x_original_data_fig,
+            good_x_fft_mag_fig,
+            bad_x_original_data_fig,
+            bad_x_fft_mag_fig,
+            good_y_original_data_fig,
+            good_y_fft_mag_fig,
+            bad_y_original_data_fig,
+            bad_y_fft_mag_fig
+            ]
 
 
 def main():

@@ -230,6 +230,10 @@ class AnalyzedExperiment:
 
         return num_blinks, average_blinks_duration
 
+    # @property
+    # def screen_locations_gaze(self):
+    #     return self.experiment.mapped_gaze_on_video.gaze
+
     @property
     @lru_cache(maxsize=80)
     def screen_locations_sorted_by_time(self) -> list[set[ScreenLocation]]:

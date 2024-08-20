@@ -1,15 +1,13 @@
 from __future__ import annotations
-
 import csv
 import math
 import os.path
 import statistics
 from enum import Enum
 import numpy as np
+import pandas as pd
 from matplotlib.backends.backend_pdf import PdfPages
 from scipy.stats import stats
-from sklearn.decomposition import PCA
-from sklearn.preprocessing import StandardScaler
 from AnalyzedExperiments import AnalyzedExperiments, limit_standard_deviation
 from itertools import zip_longest
 from sklearn.cluster import KMeans
@@ -129,7 +127,6 @@ def create_scattered_graph(group_name_to_locations: dict[str, list[ScreenLocatio
                            create_legend=True,
                            add_middle_line=False) -> tuple[plt.figure, any]:
     """
-    :param show_correlation:
     :param add_middle_line:
     :param create_legend:
     :param dot_size:
@@ -989,7 +986,88 @@ def get_x_y_coordinates_through_time_graphs(good_analyzed_experiments: AnalyzedE
     return x_values_gaze_fix, y_values_gaze_fig, x_values_fixations_fig, y_values_fixations_fig
 
 
-# def pca_graphs(num_fixations_y_good_x_bad: list[ScreenLocation],
-#                duration_mean_y_good_x_bad: list[ScreenLocation],
-#                num_of_blinks_fig_y_good_x_bad: list[ScreenLocation]):
-#     pass
+def plot_fft(good_analyzed_experiments: AnalyzedExperiments,
+             bad_analyzed_experiments: AnalyzedExperiments):
+    def group_fft(analyzed_experiments, values_col, group_name):
+        fft_values = []
+        fft_frequencies = []
+
+        group_gaze_points = [
+            analyzed_experiment.experiment.mapped_gaze_on_video.gaze[values_col]
+            for experiment_id, analyzed_experiment in analyzed_experiments.analyzed_experiments.items()
+        ]
+
+        min_length = min(len(x) for x in group_gaze_points)
+        group_gaze_points_short_length = [x[:min_length] for x in group_gaze_points]
+
+        all_gaze_points = np.concatenate(group_gaze_points_short_length)
+        global_mean = np.mean(all_gaze_points)
+
+        # Center data using global mean
+        centered_gaze_points = [x - global_mean for x in group_gaze_points_short_length]
+
+        mean_gaze_points = np.mean(np.array(centered_gaze_points), axis=0)
+        mean_gaze_points -= np.mean(mean_gaze_points)
+
+        for gaze_points in centered_gaze_points:
+            # Apply FFT
+            fft_values.append(np.fft.fft(gaze_points))
+
+            # Calculate the frequencies for plotting
+            fft_frequencies.append(np.fft.fftfreq(len(gaze_points)))
+
+        # Compute the mean FFT values for plotting
+        fft_frequencies.append(np.fft.fftfreq(min_length))
+        mean_fft_values = np.mean(np.abs(np.array(fft_values)), axis=0)
+        mean_fft_frequencies = fft_frequencies[0]  # Frequencies should be the same for all
+
+        # Create a figure and axes
+        fig, ax = plt.subplots(1, 2, figsize=(20, 6))
+
+        # Create figures for plotting
+        original_data_fig, original_data_ax = plt.subplots(figsize=(20, 6))
+        original_data_ax.plot(mean_gaze_points, marker='o', linestyle='-', color='b')
+        original_data_ax.set_title(f'Original Data {group_name}')
+        original_data_ax.set_xlabel('Index')
+        original_data_ax.set_ylabel('Value')
+        plt.tight_layout()
+
+        fft_mag_fig, fft_mag_ax = plt.subplots(figsize=(20, 6))
+        fft_mag_ax.stem(mean_fft_frequencies, mean_fft_values, use_line_collection=True)
+        fft_mag_ax.set_title(f'FFT Magnitude {group_name}')
+        fft_mag_ax.set_xlabel('Frequency')
+        fft_mag_ax.set_ylabel('Magnitude')
+        plt.tight_layout()
+
+        # Return the figures and axes
+        return original_data_fig, original_data_ax, fft_mag_fig, fft_mag_ax
+
+    x_col = "gaze position transf x [px]"
+    y_col = "gaze position transf y [px]"
+    (good_x_original_data_fig,
+     good_x_original_data_ax,
+     good_x_fft_mag_fig,
+     good_x_fft_mag_ax) = group_fft(good_analyzed_experiments, x_col, "Good Eyesight X-Axis")
+
+    (bad_x_original_data_fig,
+     bad_x_original_data_ax,
+     bad_x_fft_mag_fig,
+     bad_x_fft_mag_ax) = group_fft(bad_analyzed_experiments, x_col, "Bad Eyesight X-Axis")
+
+    (good_y_original_data_fig,
+     good_y_original_data_ax,
+     good_y_fft_mag_fig,
+     good_y_fft_mag_ax) = group_fft(good_analyzed_experiments, y_col, "Good Eyesight Y-Axis")
+
+    (bad_y_original_data_fig,
+     bad_y_original_data_ax,
+     bad_y_fft_mag_fig,
+     bad_y_fft_mag_ax) = group_fft(bad_analyzed_experiments, y_col, "Bad Eyesight Y-Axis")
+    return (good_x_original_data_fig,
+            good_x_fft_mag_fig,
+            bad_x_original_data_fig,
+            bad_x_fft_mag_fig,
+            good_y_original_data_fig,
+            good_y_fft_mag_fig,
+            bad_y_original_data_fig,
+            bad_y_fft_mag_fig)
