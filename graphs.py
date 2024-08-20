@@ -311,7 +311,7 @@ def create_graphs_of_good_vs_bad_eyesight_fixation_data(
 
     fixation_differences_fig, _ = create_scattered_graph(
         {
-            "Differences per experiment": [
+            "Differences per Participant": [
                 ScreenLocation(int(experiment_real_id), fixation_differences)
                 for experiment_real_id, fixation_differences in fixation_differences.items()
             ]
@@ -333,7 +333,7 @@ def create_graphs_of_good_vs_bad_eyesight_fixation_data(
 
     single_experiments_num_fixations_y_good_x_bad, _ = create_scattered_graph(
         {
-            "Experiments": num_fixations_y_good_x_bad
+            "Participants": num_fixations_y_good_x_bad
         },
         {
             "Participants": LIGHT_PURPLE
@@ -412,7 +412,7 @@ def create_graphs_of_good_vs_bad_eyesight_fixation_data(
     ]
     single_experiments_duration_mean_y_good_x_bad, _ = create_scattered_graph(
         {
-            "Experiments": duration_mean_y_good_x_bad
+            "Participants": duration_mean_y_good_x_bad
         },
         {
             "Participants": LIGHT_PURPLE
@@ -556,14 +556,11 @@ def get_fixations_number_graphs(good_analyzed_experiments: AnalyzedExperiments,
             zip(eyesight_stdev, eyesight_fixation_count_sorted_by_time_limited_stdev)
         ]
 
-        print("fix len")
-        print([len(fixation_count) for fixation_count
-            in eyesight_fixation_count_sorted_by_time_limited_stdev])
         eyesight_fixation_average_sorted_by_time = [
             sum(fixation_count) / len(fixation_count) for fixation_count
             in eyesight_fixation_count_sorted_by_time_limited_stdev
         ]
-        return (eyesight_stfdev,
+        return (eyesight_stdev,
                 eyesight_sem,
                 eyesight_fixation_average_sorted_by_time)
 
@@ -876,24 +873,24 @@ def get_x_y_coordinates_through_time_graphs(good_analyzed_experiments: AnalyzedE
         {
             **good_experiments_x_gaze,
             **bad_experiments_x_gaze,
-            "Good Eyesight average": good_experiment_average_x_gaze,
-            "Bad Eyesight average": bad_experiment_average_x_gaze
+            "Good Eyesight Average": good_experiment_average_x_gaze,
+            "Bad Eyesight Average": bad_experiment_average_x_gaze
         },
         {
             **good_experiments_id_to_color_gaze,
             **bad_experiments_id_to_color_gaze,
-            "Good Eyesight average": GREEN,
-            "Bad Eyesight average": RED
+            "Good Eyesight Average": GREEN,
+            "Bad Eyesight Average": RED
         },
         "Time",
         "X Value",
         "X-Axis Values (Gaze)\n(Excluding Data Beyond 2 Standard Deviations)",
         GraphType.Line,
-        ["Good Eyesight average", "Bad Eyesight average"],
+        ["Good Eyesight Average", "Bad Eyesight Average"],
         add_fill_between=True,
         fill_between_values={
-            "Good Eyesight average": good_gaze_x_sem_sorted_by_time,
-            "Bad Eyesight average": bad_gaze_x_sem_sorted_by_time
+            "Good Eyesight Average": good_gaze_x_sem_sorted_by_time,
+            "Bad Eyesight Average": bad_gaze_x_sem_sorted_by_time
         }
     )
 
@@ -901,24 +898,24 @@ def get_x_y_coordinates_through_time_graphs(good_analyzed_experiments: AnalyzedE
         {
             **good_experiments_y_gaze,
             **bad_experiments_y_gaze,
-            "Good Eyesight average": good_experiment_average_y_gaze,
-            "Bad Eyesight average": bad_experiment_average_y_gaze
+            "Good Eyesight Average": good_experiment_average_y_gaze,
+            "Bad Eyesight Average": bad_experiment_average_y_gaze
         },
         {
             **good_experiments_id_to_color_gaze,
             **bad_experiments_id_to_color_gaze,
-            "Good Eyesight average": GREEN,
-            "Bad Eyesight average": RED
+            "Good Eyesight Average": GREEN,
+            "Bad Eyesight Average": RED
         },
         "Time",
         "Y Value",
         "Y-Axis Values (Gaze)\n(Excluding Data Beyond 2 Standard Deviations)",
         GraphType.Line,
-        ["Good Eyesight average", "Bad Eyesight average"],
+        ["Good Eyesight Average", "Bad Eyesight Average"],
         add_fill_between=True,
         fill_between_values={
-            "Good Eyesight average": good_gaze_y_sem_sorted_by_time,
-            "Bad Eyesight average": bad_gaze_y_sem_sorted_by_time
+            "Good Eyesight Average": good_gaze_y_sem_sorted_by_time,
+            "Bad Eyesight Average": bad_gaze_y_sem_sorted_by_time
         }
     )
 
@@ -942,24 +939,24 @@ def get_x_y_coordinates_through_time_graphs(good_analyzed_experiments: AnalyzedE
         {
             **good_experiments_x_fixation,
             **bad_experiments_x_fixation,
-            "Good Eyesight average": good_experiment_average_x_fixation,
-            "Bad Eyesight average": bad_experiment_average_x_fixation
+            "Good Eyesight Average": good_experiment_average_x_fixation,
+            "Bad Eyesight Average": bad_experiment_average_x_fixation
         },
         {
             **good_experiments_id_to_color_fixation,
             **bad_experiments_id_to_color_fixation,
-            "Good Eyesight average": GREEN,
-            "Bad Eyesight average": RED
+            "Good Eyesight Average": GREEN,
+            "Bad Eyesight Average": RED
         },
         "Time",
         "X Value",
         "X-Axis Values (Fixations)\n(Excluding Data Beyond 2 Standard Deviations)",
         GraphType.Line,
-        ["Good Eyesight average", "Bad Eyesight average"],
+        ["Good Eyesight Average", "Bad Eyesight Average"],
         add_fill_between=True,
         fill_between_values={
-            "Good Eyesight average": good_fixation_x_sem_sorted_by_time,
-            "Bad Eyesight average": bad_fixation_x_sem_sorted_by_time
+            "Good Eyesight Average": good_fixation_x_sem_sorted_by_time,
+            "Bad Eyesight Average": bad_fixation_x_sem_sorted_by_time
         }
     )
 
@@ -967,24 +964,24 @@ def get_x_y_coordinates_through_time_graphs(good_analyzed_experiments: AnalyzedE
         {
             **good_experiments_y_fixation,
             **bad_experiments_y_fixation,
-            "Good Eyesight average": good_experiment_average_y_fixation,
-            "Bad Eyesight average": bad_experiment_average_y_fixation
+            "Good Eyesight Average": good_experiment_average_y_fixation,
+            "Bad Eyesight Average": bad_experiment_average_y_fixation
         },
         {
             **good_experiments_id_to_color_fixation,
             **bad_experiments_id_to_color_fixation,
-            "Good Eyesight average": GREEN,
-            "Bad Eyesight average": RED
+            "Good Eyesight Average": GREEN,
+            "Bad Eyesight Average": RED
         },
         "Time",
         "y value",
         "Y-Axis Values (Fixations)\n(Excluding Data Beyond 2 Standard Deviations)",
         GraphType.Line,
-        ["Good Eyesight average", "Bad Eyesight average"],
+        ["Good Eyesight Average", "Bad Eyesight Average"],
         add_fill_between=True,
         fill_between_values={
-            "Good Eyesight average": good_fixation_y_sem_sorted_by_time,
-            "Bad Eyesight average": bad_fixation_y_sem_sorted_by_time
+            "Good Eyesight Average": good_fixation_y_sem_sorted_by_time,
+            "Bad Eyesight Average": bad_fixation_y_sem_sorted_by_time
         }
     )
 
