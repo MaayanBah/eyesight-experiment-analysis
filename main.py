@@ -85,15 +85,10 @@ def create_graphs(good_analyzed_experiments: AnalyzedExperiments,
      good_y_original_data_fig,
      good_y_fft_mag_fig,
      bad_y_original_data_fig,
-     bad_y_fft_mag_fig) = plot_fft(good_analyzed_experiments, bad_analyzed_experiments)
-    # return [good_x_original_data_fig,
-    #         good_x_fft_mag_fig,
-    #         bad_x_original_data_fig,
-    #         bad_x_fft_mag_fig,
-    #         good_y_original_data_fig,
-    #         good_y_fft_mag_fig,
-    #         bad_y_original_data_fig,
-    #         bad_y_fft_mag_fig]
+     bad_y_fft_mag_fig,
+     fft_dif_mag_fig_x,
+     fft_dif_mag_fig_y) = plot_fft(good_analyzed_experiments, bad_analyzed_experiments)
+
     return [num_of_fixations_fig_sorted_by_time,
             fig_fixation_count_stdev,
             x_coordinates_through_time_fixations_fig,
@@ -123,7 +118,9 @@ def create_graphs(good_analyzed_experiments: AnalyzedExperiments,
             good_y_original_data_fig,
             good_y_fft_mag_fig,
             bad_y_original_data_fig,
-            bad_y_fft_mag_fig
+            bad_y_fft_mag_fig,
+            fft_dif_mag_fig_x,
+            fft_dif_mag_fig_y
             ]
 
 

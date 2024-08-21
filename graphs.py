@@ -988,7 +988,7 @@ def get_x_y_coordinates_through_time_graphs(good_analyzed_experiments: AnalyzedE
 
 def plot_fft(good_analyzed_experiments: AnalyzedExperiments,
              bad_analyzed_experiments: AnalyzedExperiments):
-    def group_fft(analyzed_experiments, values_col, group_name):
+    def run_fft(analyzed_experiments, values_col):
         fft_values = []
         fft_frequencies = []
 
@@ -1019,11 +1019,11 @@ def plot_fft(good_analyzed_experiments: AnalyzedExperiments,
         # Compute the mean FFT values for plotting
         fft_frequencies.append(np.fft.fftfreq(min_length))
         mean_fft_values = np.mean(np.abs(np.array(fft_values)), axis=0)
-        mean_fft_frequencies = fft_frequencies[0]  # Frequencies should be the same for all
+        mean_fft_frequencies = fft_frequencies[0]
 
-        # Create a figure and axes
-        fig, ax = plt.subplots(1, 2, figsize=(20, 6))
+        return mean_gaze_points, mean_fft_frequencies, mean_fft_values
 
+    def create_fft_graphs(mean_gaze_points, mean_fft_frequencies, mean_fft_values, group_name):
         # Create figures for plotting
         original_data_fig, original_data_ax = plt.subplots(figsize=(20, 6))
         original_data_ax.plot(mean_gaze_points, marker='o', linestyle='-', color='b')
@@ -1033,7 +1033,7 @@ def plot_fft(good_analyzed_experiments: AnalyzedExperiments,
         plt.tight_layout()
 
         fft_mag_fig, fft_mag_ax = plt.subplots(figsize=(20, 6))
-        fft_mag_ax.stem(mean_fft_frequencies, mean_fft_values, use_line_collection=True)
+        fft_mag_ax.stem(mean_fft_frequencies, mean_fft_values)
         fft_mag_ax.set_title(f'FFT Magnitude {group_name}')
         fft_mag_ax.set_xlabel('Frequency')
         fft_mag_ax.set_ylabel('Magnitude')
@@ -1044,25 +1044,69 @@ def plot_fft(good_analyzed_experiments: AnalyzedExperiments,
 
     x_col = "gaze position transf x [px]"
     y_col = "gaze position transf y [px]"
+
+    (good_x_mean_gaze_points,
+     good_x_mean_fft_frequencies,
+     good_x_mean_fft_values) = run_fft(good_analyzed_experiments, x_col)
+
     (good_x_original_data_fig,
      good_x_original_data_ax,
      good_x_fft_mag_fig,
-     good_x_fft_mag_ax) = group_fft(good_analyzed_experiments, x_col, "Good Eyesight X-Axis")
+     good_x_fft_mag_ax) = create_fft_graphs(
+        good_x_mean_gaze_points, good_x_mean_fft_frequencies, good_x_mean_fft_values, "Good Eyesight X-Axis"
+    )
+
+    (bad_x_mean_gaze_points,
+     bad_x_mean_fft_frequencies,
+     bad_x_mean_fft_values) = run_fft(bad_analyzed_experiments, x_col)
 
     (bad_x_original_data_fig,
      bad_x_original_data_ax,
      bad_x_fft_mag_fig,
-     bad_x_fft_mag_ax) = group_fft(bad_analyzed_experiments, x_col, "Bad Eyesight X-Axis")
+     bad_x_fft_mag_ax) = create_fft_graphs(
+        bad_x_mean_gaze_points, bad_x_mean_fft_frequencies, bad_x_mean_fft_values, "Bad Eyesight X-Axis"
+    )
+
+    (good_y_mean_gaze_points,
+     good_y_mean_fft_frequencies,
+     good_y_mean_fft_values) = run_fft(good_analyzed_experiments, y_col)
 
     (good_y_original_data_fig,
      good_y_original_data_ax,
      good_y_fft_mag_fig,
-     good_y_fft_mag_ax) = group_fft(good_analyzed_experiments, y_col, "Good Eyesight Y-Axis")
+     good_y_fft_mag_ax) = create_fft_graphs(
+        good_y_mean_gaze_points, good_y_mean_fft_frequencies, good_y_mean_fft_values, "Good Eyesight Y-Axis"
+    )
+
+    (bad_y_mean_gaze_points,
+     bad_y_mean_fft_frequencies,
+     bad_y_mean_fft_values) = run_fft(bad_analyzed_experiments, y_col)
 
     (bad_y_original_data_fig,
      bad_y_original_data_ax,
      bad_y_fft_mag_fig,
-     bad_y_fft_mag_ax) = group_fft(bad_analyzed_experiments, y_col, "Bad Eyesight Y-Axis")
+     bad_y_fft_mag_ax) = create_fft_graphs(
+        bad_y_mean_gaze_points, bad_y_mean_fft_frequencies, bad_y_mean_fft_values, "Bad Eyesight Y-Axis"
+    )
+
+    min_good_bad = min(len(good_y_mean_fft_values), len(bad_y_mean_fft_values))
+    bad_good_magnitude_difference_y = good_y_mean_fft_values[:min_good_bad] - bad_y_mean_fft_values[:min_good_bad]
+    bad_good_magnitude_difference_x = good_x_mean_fft_values[:min_good_bad] - bad_x_mean_fft_values[:min_good_bad]
+
+    fft_dif_mag_fig_x, fft_dif_mag_ax_x = plt.subplots(figsize=(20, 6))
+    fft_dif_mag_ax_x.stem(good_x_mean_fft_frequencies[:min_good_bad], bad_good_magnitude_difference_x)
+    fft_dif_mag_ax_x.set_title(f'FFT Magnitude Good - Bad Differences X-Axis')
+    fft_dif_mag_ax_x.set_xlabel('Frequency')
+    fft_dif_mag_ax_x.set_ylabel('Magnitude')
+    plt.tight_layout()
+
+    fft_dif_mag_fig_y, fft_dif_mag_ax_y = plt.subplots(figsize=(20, 6))
+    fft_dif_mag_ax_y.stem(good_y_mean_fft_frequencies[:min_good_bad], bad_good_magnitude_difference_y)
+    fft_dif_mag_ax_y.set_title(f'FFT Magnitude Good - Bad Differences Y-Axis')
+    fft_dif_mag_ax_y.set_xlabel('Frequency')
+    fft_dif_mag_ax_y.set_ylabel('Magnitude')
+    plt.tight_layout()
+
     return (good_x_original_data_fig,
             good_x_fft_mag_fig,
             bad_x_original_data_fig,
@@ -1070,4 +1114,6 @@ def plot_fft(good_analyzed_experiments: AnalyzedExperiments,
             good_y_original_data_fig,
             good_y_fft_mag_fig,
             bad_y_original_data_fig,
-            bad_y_fft_mag_fig)
+            bad_y_fft_mag_fig,
+            fft_dif_mag_fig_x,
+            fft_dif_mag_fig_y)
