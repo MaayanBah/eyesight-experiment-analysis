@@ -125,7 +125,8 @@ def create_scattered_graph(group_name_to_locations: dict[str, list[ScreenLocatio
                            title: str,
                            dot_size: int = 20,
                            create_legend=True,
-                           add_middle_line=False) -> tuple[plt.figure, any]:
+                           add_middle_line=False,
+                           add_x_equal_y_line=False) -> tuple[plt.figure, any]:
     """
     :param add_middle_line:
     :param create_legend:
@@ -164,6 +165,14 @@ def create_scattered_graph(group_name_to_locations: dict[str, list[ScreenLocatio
             x_vals = np.array(ax.get_xlim())
             y_vals = intercept + slope * x_vals
             ax.plot(x_vals, y_vals, color=group_name_to_color[group_name], linestyle='-', linewidth=1)
+
+    if add_x_equal_y_line:
+        # Add a y = x line
+        x_limits = ax.get_xlim()
+        y_limits = ax.get_ylim()
+        min_val = max(min(x_limits[0], y_limits[0]), min(x_limits[1], y_limits[1]))
+        max_val = min(max(x_limits[0], y_limits[0]), max(x_limits[1], y_limits[1]))
+        ax.plot([min_val, max_val], [min_val, max_val], color=LIGHT_GREY, linestyle='--', linewidth=1)
 
     if create_legend:
         ax.legend()
@@ -341,7 +350,8 @@ def create_graphs_of_good_vs_bad_eyesight_fixation_data(
         # f"t-statistic: {t_stat_num_fixations:.3f},"
         # f" p-value: {p_value_num_fixations:.3f},"
         # f" correlation: {correlation_num_fixations:.3f}",
-        add_middle_line=True)
+        add_middle_line=True,
+        add_x_equal_y_line=True)
 
     t_stat_duration_mean, p_value_duration_mean = stats.ttest_rel(
         [bad_real_id_to_duration_mean[id_] for id_ in ids_order],
@@ -382,7 +392,7 @@ def create_graphs_of_good_vs_bad_eyesight_fixation_data(
         },
         "Participant",
         "Duration Mean",
-        "Duration Mean per Participant",
+        "Duration Mean per Participant"
     )
 
     duration_mean_differences_fig, _ = create_scattered_graph(
@@ -420,7 +430,8 @@ def create_graphs_of_good_vs_bad_eyesight_fixation_data(
         # f"t-statistic: {t_stat_duration_mean:.3f},"
         # f" p-value: {p_value_duration_mean:.3f}"
         # f"correlation: {correlation_duration_mean:.3f}",
-        add_middle_line=True
+        add_middle_line=True,
+        add_x_equal_y_line=True
     )
 
     return (fixations_fig,
@@ -750,7 +761,8 @@ def get_blink_graphs(good_analyzed_experiments: AnalyzedExperiments,
         # f"\nt-statistic: {t_stat_num_blinks:.3f},"
         # f" p-value: {p_value_num_blinks:.3f},"
         # f" correlation: {correlation_num_blinks:.3f}",
-        add_middle_line=True
+        add_middle_line=True,
+        add_x_equal_y_line=True
     )
 
     return (mean_num_of_blinks_fig,
