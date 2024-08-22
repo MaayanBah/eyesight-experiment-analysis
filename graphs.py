@@ -290,8 +290,7 @@ def create_graphs_of_good_vs_bad_eyesight_fixation_data(
         "Number of Fixations (Average)",
         "Average Number of Fixations\n"
         f"t-statistic: {t_stat_num_fixations:.3f},"
-        f" p-value: {p_value_num_fixations:.3f},"
-        f" correlation: {correlation_num_fixations:.3f}",
+        f" p-value: {p_value_num_fixations:.3f},",
         y_errors=[good_fixations_sem, bad_fixations_sem]
     )
 
@@ -312,7 +311,8 @@ def create_graphs_of_good_vs_bad_eyesight_fixation_data(
         },
         "Participant",
         "Number of Fixations",
-        "Number of Fixations per Experiment",
+        "Number of Fixations per Experiment"
+
     )
 
     fixation_differences_fig, _ = create_scattered_graph(
@@ -346,10 +346,10 @@ def create_graphs_of_good_vs_bad_eyesight_fixation_data(
         },
         "Bad Eyesight Number of Fixations",
         "Good Eyesight Number of Fixations",
-        f"Number of Fixations per Participant\n",
+        f"Number of Fixations per Participant\n"
         # f"t-statistic: {t_stat_num_fixations:.3f},"
         # f" p-value: {p_value_num_fixations:.3f},"
-        # f" correlation: {correlation_num_fixations:.3f}",
+        f" correlation: {correlation_num_fixations:.3f}",
         add_middle_line=True,
         add_x_equal_y_line=True)
 
@@ -370,8 +370,8 @@ def create_graphs_of_good_vs_bad_eyesight_fixation_data(
         "Average Duration",
         "Average Fixation Duration [ms]\n"
         f"t-statistic: {t_stat_duration_mean:.3f},"
-        f" p-value: {p_value_duration_mean:.3f},"
-        f" correlation: {correlation_duration_mean:.3f}",
+        f" p-value: {p_value_duration_mean:.3f},",
+        # f" correlation: {correlation_duration_mean:.3f}",
         y_errors=[good_duration_sem, bad_duration_sem]
     )
 
@@ -426,10 +426,10 @@ def create_graphs_of_good_vs_bad_eyesight_fixation_data(
         },
         "Bad Eyesight Duration Mean",
         "Good Eyesight Duration Mean",
-        f"Duration Mean per Participant\n",
+        f"Duration Mean per Participant\n"
         # f"t-statistic: {t_stat_duration_mean:.3f},"
         # f" p-value: {p_value_duration_mean:.3f}"
-        # f"correlation: {correlation_duration_mean:.3f}",
+        f"correlation: {correlation_duration_mean:.3f}",
         add_middle_line=True,
         add_x_equal_y_line=True
     )
@@ -692,8 +692,8 @@ def get_blink_graphs(good_analyzed_experiments: AnalyzedExperiments,
         "Eyesight",
         "Blinks (Average)",
         f"Average Number of Blinks\nt-statistic: {t_stat_num_blinks:.3f},"
-        f" p-value: {p_value_num_blinks:.3f},"
-        f" correlation: {correlation_num_blinks:.3f}",
+        f" p-value: {p_value_num_blinks:.3f},",
+        # f" correlation: {correlation_num_blinks:.3f}",
         y_errors=[good_blinks_sem, bad_blinks_sem]
     )
 
@@ -757,10 +757,10 @@ def get_blink_graphs(good_analyzed_experiments: AnalyzedExperiments,
         },
         "Bad Eyesight Number of Blinks",
         "Good Eyesight Number of Blinks",
-        f"Number of Blinks per Experiment",
+        f"Number of Blinks per Experiment"
         # f"\nt-statistic: {t_stat_num_blinks:.3f},"
         # f" p-value: {p_value_num_blinks:.3f},"
-        # f" correlation: {correlation_num_blinks:.3f}",
+        f" correlation: {correlation_num_blinks:.3f}",
         add_middle_line=True,
         add_x_equal_y_line=True
     )
