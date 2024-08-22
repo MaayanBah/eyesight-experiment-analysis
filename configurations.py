@@ -8,3 +8,6 @@ BLUE: str = "#6C79CB"
 LIGHT_GREY: str = "#E3E4E2"
 LIGHT_BLUE: str = "#76D8F6"
 LIGHT_PURPLE: str = "#9B81D7"
+
+SAMPLE_RATE = 200  # Hertz
+DURATION = 5  # Seconds

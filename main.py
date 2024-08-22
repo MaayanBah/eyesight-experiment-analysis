@@ -78,13 +78,9 @@ def create_graphs(good_analyzed_experiments: AnalyzedExperiments,
         good_analyzed_experiments, bad_analyzed_experiments
     )
 
-    (good_x_original_data_fig,
-     good_x_fft_mag_fig,
-     bad_x_original_data_fig,
+    (good_x_fft_mag_fig,
      bad_x_fft_mag_fig,
-     good_y_original_data_fig,
      good_y_fft_mag_fig,
-     bad_y_original_data_fig,
      bad_y_fft_mag_fig,
      fft_dif_mag_fig_x,
      fft_dif_mag_fig_y) = plot_fft(good_analyzed_experiments, bad_analyzed_experiments)
@@ -111,13 +107,9 @@ def create_graphs(good_analyzed_experiments: AnalyzedExperiments,
             variance_mean_fig,
             x_coordinates_through_time_gaze_fig,
             y_coordinates_through_time_gaze_fig,
-            good_x_original_data_fig,
             good_x_fft_mag_fig,
-            bad_x_original_data_fig,
             bad_x_fft_mag_fig,
-            good_y_original_data_fig,
             good_y_fft_mag_fig,
-            bad_y_original_data_fig,
             bad_y_fft_mag_fig,
             fft_dif_mag_fig_x,
             fft_dif_mag_fig_y
